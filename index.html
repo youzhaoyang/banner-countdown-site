@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Top Banner Countdown Demo</title>
+    <style>
+      :root {
+        --bg: #0b0f14;
+        --panel: #121821;
+        --line: #253042;
+        --text: #f4f7fb;
+        --muted: #9ca9be;
+        --accent: #d5ff1f;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: radial-gradient(circle at 10% -20%, #1a2740 0%, #0b0f14 42%);
+        color: var(--text);
+        font-family: "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      }
+
+      .banner {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        min-height: 46px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 6px 38px 6px 12px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.18);
+      }
+
+      .banner-content {
+        width: min(1200px, 100%);
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 8px;
+        position: relative;
+        padding-right: 18px;
+      }
+
+      .banner-text {
+        font-size: 17px;
+        line-height: 1.2;
+        font-weight: 900;
+        color: #050505;
+        letter-spacing: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .banner-btn {
+        border: 1px solid rgba(188, 255, 0, 0.55);
+        border-radius: 999px;
+        padding: 6px 12px;
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1;
+        background: #0f1b15;
+        color: #cfff21;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+
+      .banner-close {
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 20px;
+        height: 20px;
+        border-radius: 0;
+        border: none;
+        color: #111;
+        background: transparent;
+        font-size: 20px;
+        line-height: 1;
+        cursor: pointer;
+        padding: 0;
+      }
+
+      .countdown {
+        position: static;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        border-radius: 999px;
+        padding: 6px 12px;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1;
+        color: #fff;
+        background: linear-gradient(180deg, #ff28ae 0%, #f20b8f 100%);
+      }
+
+      .countdown.top-right {
+        top: 0;
+        right: 0;
+      }
+
+      .countdown.bottom-left {
+        left: 0;
+        bottom: 0;
+      }
+
+      .countdown.btn-right {
+        position: static;
+      }
+
+      .next-countdown {
+        position: fixed;
+        right: 12px;
+        top: 56px;
+        z-index: 999;
+        padding: 8px 10px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: rgba(10, 15, 23, 0.92);
+        color: var(--muted);
+        font-size: 12px;
+        display: none;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .page {
+        width: min(1100px, 100%);
+        margin: 94px auto 24px;
+        padding: 0 16px;
+      }
+
+      .panel {
+        background: linear-gradient(165deg, rgba(18, 24, 33, 0.96), rgba(12, 16, 24, 0.96));
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 16px;
+      }
+
+      .title {
+        margin: 0;
+        font-size: 22px;
+      }
+
+      .desc {
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .status-grid {
+        margin-top: 14px;
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .editor {
+        margin-top: 14px;
+        display: grid;
+        gap: 8px;
+        grid-template-columns: 1.5fr 1fr 1fr;
+      }
+
+      .editor-field {
+        display: grid;
+        gap: 6px;
+      }
+
+      .editor-field label {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .editor-field input {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #101826;
+        color: var(--text);
+        padding: 9px 10px;
+        font-size: 13px;
+      }
+
+      .stat {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .stat strong {
+        color: var(--text);
+      }
+
+      .actions {
+        margin-top: 14px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .actions button {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #182130;
+        color: var(--text);
+        padding: 8px 12px;
+        font-size: 13px;
+        cursor: pointer;
+      }
+
+      .actions button.primary {
+        border-color: rgba(213, 255, 31, 0.45);
+        background: #273111;
+        color: #dcff75;
+      }
+
+      code {
+        color: #dcff75;
+      }
+
+      @media (max-width: 760px) {
+        .banner {
+          padding: 6px 30px 6px 8px;
+        }
+
+        .banner-text {
+          font-size: 14px;
+        }
+
+        .banner-close {
+          right: 0;
+        }
+
+        .status-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .editor {
+          grid-template-columns: 1fr;
+        }
+
+        .countdown.top-right,
+        .countdown.bottom-left {
+          position: static;
+        }
+
+        .banner-btn {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="banner" class="banner" role="region" aria-label="Top promotion banner">
+      <div class="banner-content">
+        <div id="showCountdown" class="countdown"></div>
+        <span id="bannerText" class="banner-text"></span>
+        <button id="bannerBtn" class="banner-btn" type="button"></button>
+        <button id="bannerClose" class="banner-close" type="button" aria-label="Close">×</button>
+      </div>
+    </div>
+
+    <div id="hideCountdown" class="next-countdown"></div>
+
+    <main class="page">
+      <section class="panel">
+        <h1 class="title">前端吊顶倒计时 Demo</h1>
+        <p class="desc">完整实现：展示/隐藏循环、双场景倒计时、手动关闭行为、本地状态恢复。</p>
+
+        <div class="status-grid">
+          <div class="stat">当前阶段：<strong id="phaseText"></strong></div>
+          <div class="stat">已完成循环：<strong id="loopText"></strong></div>
+          <div class="stat">状态存储键：<code id="storageKeyText"></code></div>
+          <div class="stat">剩余时间：<strong id="remainText"></strong></div>
+        </div>
+
+        <div class="editor">
+          <div class="editor-field">
+            <label for="bannerTextInput">Banner 文案</label>
+            <input id="bannerTextInput" type="text" />
+          </div>
+          <div class="editor-field">
+            <label for="startInput">开始时间</label>
+            <input id="startInput" type="datetime-local" />
+          </div>
+          <div class="editor-field">
+            <label for="endInput">结束时间</label>
+            <input id="endInput" type="datetime-local" />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="applyEditorBtn" class="primary" type="button">Apply Banner Config</button>
+          <button id="resumeBtn" class="primary" type="button">Resume Cycle</button>
+          <button id="resetBtn" type="button">Reset Cycle State</button>
+          <button id="clearBtn" type="button">Clear localStorage Key</button>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const CONFIG = {
+        id: "459",
+        text: "Kling 3.0 Exclusive Early Unlimited Access & 2-YEAR UNLIMITED Nano Banana Pro. 85% OFF",
+        btn: "NEW Kling 3.0 - Exclusive on Higgsfield",
+        link: "https://www.shakker.ai/aigenerator",
+        bg: ["#c7ff14 0%", "#baf200 100%"],
+        btColor: "#cfff21",
+        textStyle: {
+          color: "#050505"
+        },
+        btStyle: {
+          border: "1px solid rgba(188, 255, 0, 0.55)",
+          background: "#0f1b15",
+          color: "#cfff21"
+        },
+        cycleConfig: {
+          showHour: 2,
+          hideSecond: 3600,
+          isInfinite: true,
+          cycleNum: null
+        },
+        countdownConfig: {
+          showCountdown: true,
+          countdownPosition: "top-right",
+          countdownStyle: {
+            color: "#FFFFFF",
+            fontSize: "12px",
+            fontWeight: "500"
+          },
+          showHideCountdown: true
+        },
+        closeBehavior: "keepCycle",
+        storageKey: "pop_459_cycle_state"
+      };
+
+      const PHASE = {
+        SHOW: "SHOW",
+        HIDE: "HIDE",
+        STOPPED: "STOPPED",
+        PAUSED: "PAUSED"
+      };
+
+      const el = {
+        banner: document.getElementById("banner"),
+        bannerText: document.getElementById("bannerText"),
+        bannerBtn: document.getElementById("bannerBtn"),
+        bannerClose: document.getElementById("bannerClose"),
+        showCountdown: document.getElementById("showCountdown"),
+        hideCountdown: document.getElementById("hideCountdown"),
+        phaseText: document.getElementById("phaseText"),
+        loopText: document.getElementById("loopText"),
+        storageKeyText: document.getElementById("storageKeyText"),
+        remainText: document.getElementById("remainText"),
+        bannerTextInput: document.getElementById("bannerTextInput"),
+        startInput: document.getElementById("startInput"),
+        endInput: document.getElementById("endInput"),
+        applyEditorBtn: document.getElementById("applyEditorBtn"),
+        resumeBtn: document.getElementById("resumeBtn"),
+        resetBtn: document.getElementById("resetBtn"),
+        clearBtn: document.getElementById("clearBtn")
+      };
+
+      const showDurationMs = Math.max(0, Number(CONFIG.cycleConfig?.showHour || 0) * 3600 * 1000);
+      const hideDurationMs = Math.max(0, Number(CONFIG.cycleConfig?.hideSecond || 0) * 1000);
+      const editorStorageKey = `${CONFIG.storageKey}_editor`;
+      const editorState = readEditorState();
+
+      let runtimeState = readState() || createInitialState();
+
+      function createInitialState() {
+        return {
+          phase: PHASE.SHOW,
+          phaseStartAt: Date.now(),
+          cyclesCompleted: 0,
+          pausedByClose: false
+        };
+      }
+
+      function readState() {
+        try {
+          const raw = localStorage.getItem(CONFIG.storageKey);
+          if (!raw) return null;
+          const parsed = JSON.parse(raw);
+          if (!parsed || typeof parsed !== "object") return null;
+          const phase = parsed.phase;
+          const validPhase = Object.values(PHASE).includes(phase);
+          if (!validPhase) return null;
+          return {
+            phase,
+            phaseStartAt: Number(parsed.phaseStartAt) || Date.now(),
+            cyclesCompleted: Number(parsed.cyclesCompleted) || 0,
+            pausedByClose: Boolean(parsed.pausedByClose)
+          };
+        } catch (_e) {
+          return null;
+        }
+      }
+
+      function saveState() {
+        localStorage.setItem(CONFIG.storageKey, JSON.stringify(runtimeState));
+      }
+
+      function clearState() {
+        localStorage.removeItem(CONFIG.storageKey);
+      }
+
+      function toDatetimeLocalValue(timestamp) {
+        if (!timestamp) return "";
+        const date = new Date(timestamp);
+        if (Number.isNaN(date.getTime())) return "";
+        const pad = (num) => String(num).padStart(2, "0");
+        const y = date.getFullYear();
+        const m = pad(date.getMonth() + 1);
+        const d = pad(date.getDate());
+        const h = pad(date.getHours());
+        const min = pad(date.getMinutes());
+        return `${y}-${m}-${d}T${h}:${min}`;
+      }
+
+      function parseDatetimeLocal(value) {
+        if (!value) return null;
+        const time = new Date(value).getTime();
+        if (Number.isNaN(time)) return null;
+        return time;
+      }
+
+      function createDefaultEditorState() {
+        const now = Date.now();
+        return {
+          text: CONFIG.text || "",
+          startAt: now,
+          endAt: now + 2 * 3600 * 1000
+        };
+      }
+
+      function readEditorState() {
+        try {
+          const raw = localStorage.getItem(editorStorageKey);
+          if (!raw) return createDefaultEditorState();
+          const parsed = JSON.parse(raw);
+          if (!parsed || typeof parsed !== "object") return createDefaultEditorState();
+          const text = String(parsed.text || CONFIG.text || "");
+          const startAt = Number(parsed.startAt) || createDefaultEditorState().startAt;
+          const endAt = Number(parsed.endAt) || createDefaultEditorState().endAt;
+          return {
+            text,
+            startAt,
+            endAt: endAt > startAt ? endAt : startAt + 3600 * 1000
+          };
+        } catch (_e) {
+          return createDefaultEditorState();
+        }
+      }
+
+      function saveEditorState() {
+        localStorage.setItem(editorStorageKey, JSON.stringify(editorState));
+      }
+
+      function syncEditorInputs() {
+        el.bannerTextInput.value = editorState.text;
+        el.startInput.value = toDatetimeLocalValue(editorState.startAt);
+        el.endInput.value = toDatetimeLocalValue(editorState.endAt);
+      }
+
+      function readEditorInputs() {
+        const nextText = String(el.bannerTextInput.value || "").trim();
+        const nextStart = parseDatetimeLocal(el.startInput.value);
+        const nextEnd = parseDatetimeLocal(el.endInput.value);
+        const fallbackStart = Date.now();
+
+        editorState.text = nextText || CONFIG.text;
+        editorState.startAt = nextStart || fallbackStart;
+        editorState.endAt = nextEnd && nextEnd > editorState.startAt
+          ? nextEnd
+          : editorState.startAt + 3600 * 1000;
+        syncEditorInputs();
+        saveEditorState();
+      }
+
+      function getWindowStatus(now) {
+        if (now < editorState.startAt) {
+          return {
+            status: "PRE_START",
+            remainingMs: editorState.startAt - now
+          };
+        }
+        if (now >= editorState.endAt) {
+          return {
+            status: "ENDED",
+            remainingMs: 0
+          };
+        }
+        return {
+          status: "ACTIVE",
+          remainingMs: editorState.endAt - now
+        };
+      }
+
+      function applyStyleObject(target, styleObject) {
+        if (!target || !styleObject) return;
+        Object.keys(styleObject).forEach((key) => {
+          const value = styleObject[key];
+          if (value == null) return;
+          if (key.includes("-")) {
+            target.style.setProperty(key, value);
+          } else {
+            target.style[key] = value;
+          }
+        });
+      }
+
+      function formatDuration(ms) {
+        const total = Math.max(0, Math.floor(ms / 1000));
+        const h = Math.floor(total / 3600);
+        const m = Math.floor((total % 3600) / 60);
+        const s = total % 60;
+        return `${h}h ${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s`;
+      }
+
+      function isCycleAvailable() {
+        return Boolean(CONFIG.cycleConfig) && showDurationMs > 0;
+      }
+
+      function shouldContinueLoop(nextCyclesCompleted) {
+        if (!isCycleAvailable()) return false;
+        if (CONFIG.cycleConfig.isInfinite) return true;
+        const cycleNum = Number(CONFIG.cycleConfig.cycleNum || 0);
+        if (cycleNum <= 0) return false;
+        return nextCyclesCompleted < cycleNum;
+      }
+
+      function advanceState(now) {
+        if (!isCycleAvailable()) {
+          runtimeState.phase = PHASE.STOPPED;
+          return;
+        }
+
+        if (runtimeState.phase === PHASE.PAUSED || runtimeState.phase === PHASE.STOPPED) {
+          return;
+        }
+
+        let guard = 0;
+        while (guard < 20) {
+          guard += 1;
+          const elapsed = now - runtimeState.phaseStartAt;
+
+          if (runtimeState.phase === PHASE.SHOW) {
+            if (elapsed < showDurationMs) return;
+            runtimeState.phase = PHASE.HIDE;
+            runtimeState.phaseStartAt += showDurationMs;
+            continue;
+          }
+
+          if (runtimeState.phase === PHASE.HIDE) {
+            if (elapsed < hideDurationMs) return;
+            const nextCyclesCompleted = runtimeState.cyclesCompleted + 1;
+            if (shouldContinueLoop(nextCyclesCompleted)) {
+              runtimeState.cyclesCompleted = nextCyclesCompleted;
+              runtimeState.phase = PHASE.SHOW;
+              runtimeState.phaseStartAt += hideDurationMs;
+            } else {
+              runtimeState.cyclesCompleted = nextCyclesCompleted;
+              runtimeState.phase = PHASE.STOPPED;
+              runtimeState.phaseStartAt = now;
+              return;
+            }
+            continue;
+          }
+
+          return;
+        }
+      }
+
+      function getRemainingMs(now) {
+        if (runtimeState.phase === PHASE.SHOW) {
+          return Math.max(0, showDurationMs - (now - runtimeState.phaseStartAt));
+        }
+
+        if (runtimeState.phase === PHASE.HIDE) {
+          return Math.max(0, hideDurationMs - (now - runtimeState.phaseStartAt));
+        }
+
+        return 0;
+      }
+
+      function render(now) {
+        const cc = CONFIG.countdownConfig || {};
+        const remain = getRemainingMs(now);
+        const windowStatus = getWindowStatus(now);
+
+        const gradient = CONFIG.bg && CONFIG.bg.length
+          ? `linear-gradient(90deg, ${CONFIG.bg.join(",")})`
+          : "linear-gradient(90deg, #4f627f 0%, #27374f 100%)";
+
+        el.banner.style.background = gradient;
+        el.bannerText.textContent = editorState.text || CONFIG.text || "";
+        el.bannerBtn.textContent = CONFIG.btn || "Learn more";
+        el.bannerBtn.style.color = CONFIG.btColor || "#111";
+
+        applyStyleObject(el.bannerText, CONFIG.textStyle);
+        applyStyleObject(el.bannerBtn, CONFIG.btStyle);
+
+        el.showCountdown.className = `countdown ${cc.countdownPosition || "top-right"}`;
+        applyStyleObject(el.showCountdown, cc.countdownStyle || {});
+
+        const isShowing = runtimeState.phase === PHASE.SHOW;
+        const isHiding = runtimeState.phase === PHASE.HIDE;
+        const canShowByWindow = windowStatus.status === "ACTIVE";
+
+        el.banner.style.display = isShowing && canShowByWindow ? "flex" : "none";
+
+        if (cc.showCountdown && isShowing && canShowByWindow) {
+          const displayRemain = windowStatus.remainingMs > 0 ? windowStatus.remainingMs : remain;
+          el.showCountdown.textContent = `⌛ Expires in ${formatDuration(displayRemain)}`;
+          el.showCountdown.style.display = "block";
+        } else {
+          el.showCountdown.style.display = "none";
+        }
+
+        if (cc.showHideCountdown && (isHiding || windowStatus.status === "PRE_START")) {
+          const hideRemain = windowStatus.status === "PRE_START" ? windowStatus.remainingMs : remain;
+          const label = windowStatus.status === "PRE_START" ? "Starts in" : "Next show in";
+          el.hideCountdown.textContent = `${label} ${formatDuration(hideRemain)}`;
+          el.hideCountdown.style.display = "block";
+        } else {
+          el.hideCountdown.style.display = "none";
+        }
+
+        el.phaseText.textContent = `${runtimeState.phase} (${windowStatus.status})`;
+        el.loopText.textContent = String(runtimeState.cyclesCompleted);
+        el.storageKeyText.textContent = CONFIG.storageKey;
+        el.remainText.textContent =
+          runtimeState.phase === PHASE.STOPPED || runtimeState.phase === PHASE.PAUSED
+            ? "N/A"
+            : formatDuration(windowStatus.status === "ACTIVE" ? windowStatus.remainingMs : remain);
+      }
+
+      function handleClose() {
+        if (CONFIG.closeBehavior === "pauseCycle") {
+          runtimeState.phase = PHASE.PAUSED;
+          runtimeState.pausedByClose = true;
+          runtimeState.phaseStartAt = Date.now();
+        } else {
+          runtimeState.phase = PHASE.HIDE;
+          runtimeState.phaseStartAt = Date.now();
+        }
+        saveState();
+        render(Date.now());
+      }
+
+      function openLink() {
+        if (!CONFIG.link) return;
+        window.open(CONFIG.link, "_blank", "noopener,noreferrer");
+      }
+
+      function resumeCycle() {
+        runtimeState.phase = PHASE.SHOW;
+        runtimeState.pausedByClose = false;
+        runtimeState.phaseStartAt = Date.now();
+        saveState();
+        render(Date.now());
+      }
+
+      function resetCycle() {
+        runtimeState = createInitialState();
+        saveState();
+        render(Date.now());
+      }
+
+      function initEvents() {
+        el.bannerClose.addEventListener("click", handleClose);
+        el.bannerBtn.addEventListener("click", openLink);
+        el.applyEditorBtn.addEventListener("click", () => {
+          readEditorInputs();
+          render(Date.now());
+        });
+        el.resumeBtn.addEventListener("click", resumeCycle);
+        el.resetBtn.addEventListener("click", resetCycle);
+        el.clearBtn.addEventListener("click", () => {
+          clearState();
+          localStorage.removeItem(editorStorageKey);
+          const defaults = createDefaultEditorState();
+          editorState.text = defaults.text;
+          editorState.startAt = defaults.startAt;
+          editorState.endAt = defaults.endAt;
+          syncEditorInputs();
+          runtimeState = createInitialState();
+          render(Date.now());
+        });
+      }
+
+      function runTick() {
+        const now = Date.now();
+        advanceState(now);
+        saveState();
+        render(now);
+      }
+
+      function bootstrap() {
+        syncEditorInputs();
+        saveEditorState();
+        initEvents();
+        runTick();
+        setInterval(runTick, 1000);
+      }
+
+      bootstrap();
+    </script>
+  </body>
+</html>
