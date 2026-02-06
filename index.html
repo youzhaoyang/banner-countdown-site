@@ -297,7 +297,7 @@
           <div class="stat">当前阶段：<strong id="phaseText"></strong></div>
           <div class="stat">已完成循环：<strong id="loopText"></strong></div>
           <div class="stat">状态存储键：<code id="storageKeyText"></code></div>
-          <div class="stat">剩余时间：<strong id="remainText"></strong></div>
+          <div class="stat">重置时间：<strong id="remainText"></strong></div>
         </div>
 
         <div class="editor">
@@ -563,6 +563,16 @@
         return `${h}h ${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s`;
       }
 
+      function formatWindowCountdown(windowStatus) {
+        if (windowStatus.status === "PRE_START") {
+          return `距开始 ${formatDuration(windowStatus.remainingMs)}`;
+        }
+        if (windowStatus.status === "ACTIVE") {
+          return `距结束 ${formatDuration(windowStatus.remainingMs)}`;
+        }
+        return "已结束";
+      }
+
       function isCycleAvailable() {
         return Boolean(CONFIG.cycleConfig) && showDurationMs > 0;
       }
@@ -617,21 +627,8 @@
         }
       }
 
-      function getRemainingMs(now) {
-        if (runtimeState.phase === PHASE.SHOW) {
-          return Math.max(0, showDurationMs - (now - runtimeState.phaseStartAt));
-        }
-
-        if (runtimeState.phase === PHASE.HIDE) {
-          return Math.max(0, hideDurationMs - (now - runtimeState.phaseStartAt));
-        }
-
-        return 0;
-      }
-
       function render(now) {
         const cc = CONFIG.countdownConfig || {};
-        const remain = getRemainingMs(now);
         const windowStatus = getWindowStatus(now);
 
         const gradient = CONFIG.bg && CONFIG.bg.length
@@ -650,23 +647,22 @@
         applyStyleObject(el.showCountdown, cc.countdownStyle || {});
 
         const isShowing = runtimeState.phase === PHASE.SHOW;
-        const isHiding = runtimeState.phase === PHASE.HIDE;
         const canShowByWindow = windowStatus.status === "ACTIVE";
 
         el.banner.style.display = isShowing && canShowByWindow ? "flex" : "none";
 
         if (cc.showCountdown && isShowing && canShowByWindow) {
-          const displayRemain = windowStatus.remainingMs > 0 ? windowStatus.remainingMs : remain;
-          el.showCountdown.textContent = `⌛ Expires in ${formatDuration(displayRemain)}`;
+          el.showCountdown.textContent = `⌛ Expires in ${formatDuration(windowStatus.remainingMs)}`;
           el.showCountdown.style.display = "block";
         } else {
           el.showCountdown.style.display = "none";
         }
 
-        if (cc.showHideCountdown && (isHiding || windowStatus.status === "PRE_START")) {
-          const hideRemain = windowStatus.status === "PRE_START" ? windowStatus.remainingMs : remain;
-          const label = windowStatus.status === "PRE_START" ? "Starts in" : "Next show in";
-          el.hideCountdown.textContent = `${label} ${formatDuration(hideRemain)}`;
+        if (cc.showHideCountdown && windowStatus.status === "PRE_START") {
+          el.hideCountdown.textContent = `Starts in ${formatDuration(windowStatus.remainingMs)}`;
+          el.hideCountdown.style.display = "block";
+        } else if (cc.showHideCountdown && windowStatus.status === "ENDED") {
+          el.hideCountdown.textContent = "Ended";
           el.hideCountdown.style.display = "block";
         } else {
           el.hideCountdown.style.display = "none";
@@ -675,10 +671,7 @@
         el.phaseText.textContent = `${runtimeState.phase} (${windowStatus.status})`;
         el.loopText.textContent = String(runtimeState.cyclesCompleted);
         el.storageKeyText.textContent = CONFIG.storageKey;
-        el.remainText.textContent =
-          runtimeState.phase === PHASE.STOPPED || runtimeState.phase === PHASE.PAUSED
-            ? "N/A"
-            : formatDuration(windowStatus.status === "ACTIVE" ? windowStatus.remainingMs : remain);
+        el.remainText.textContent = formatWindowCountdown(windowStatus);
       }
 
       function handleClose() {
