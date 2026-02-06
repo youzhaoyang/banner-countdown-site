@@ -190,6 +190,21 @@
         font-size: 13px;
       }
 
+      .editor-tip {
+        margin-top: 8px;
+        font-size: 12px;
+        color: var(--muted);
+        min-height: 18px;
+      }
+
+      .editor-tip.error {
+        color: #ff8f8f;
+      }
+
+      .editor-tip.ok {
+        color: #bfff5f;
+      }
+
       .stat {
         border: 1px solid var(--line);
         border-radius: 10px;
@@ -299,6 +314,7 @@
             <input id="endInput" type="datetime-local" />
           </div>
         </div>
+        <div id="editorTip" class="editor-tip"></div>
 
         <div class="actions">
           <button id="applyEditorBtn" class="primary" type="button">Apply Banner Config</button>
@@ -367,6 +383,7 @@
         startInput: document.getElementById("startInput"),
         endInput: document.getElementById("endInput"),
         applyEditorBtn: document.getElementById("applyEditorBtn"),
+        editorTip: document.getElementById("editorTip"),
         resumeBtn: document.getElementById("resumeBtn"),
         resetBtn: document.getElementById("resetBtn"),
         clearBtn: document.getElementById("clearBtn")
@@ -431,9 +448,15 @@
 
       function parseDatetimeLocal(value) {
         if (!value) return null;
-        const time = new Date(value).getTime();
+        const normalized = String(value).trim().replace(/\//g, "-").replace(" ", "T");
+        const time = new Date(normalized).getTime();
         if (Number.isNaN(time)) return null;
         return time;
+      }
+
+      function setEditorTip(message, type) {
+        el.editorTip.textContent = message || "";
+        el.editorTip.className = `editor-tip${type ? ` ${type}` : ""}`;
       }
 
       function createDefaultEditorState() {
@@ -472,21 +495,32 @@
         el.bannerTextInput.value = editorState.text;
         el.startInput.value = toDatetimeLocalValue(editorState.startAt);
         el.endInput.value = toDatetimeLocalValue(editorState.endAt);
+        el.endInput.min = toDatetimeLocalValue(editorState.startAt);
       }
 
       function readEditorInputs() {
         const nextText = String(el.bannerTextInput.value || "").trim();
         const nextStart = parseDatetimeLocal(el.startInput.value);
         const nextEnd = parseDatetimeLocal(el.endInput.value);
-        const fallbackStart = Date.now();
+        const now = Date.now();
+
+        if (!nextStart || !nextEnd) {
+          setEditorTip("开始时间和结束时间都需要设置。", "error");
+          return false;
+        }
+
+        if (nextEnd <= nextStart) {
+          setEditorTip("结束时间必须晚于开始时间。", "error");
+          return false;
+        }
 
         editorState.text = nextText || CONFIG.text;
-        editorState.startAt = nextStart || fallbackStart;
-        editorState.endAt = nextEnd && nextEnd > editorState.startAt
-          ? nextEnd
-          : editorState.startAt + 3600 * 1000;
+        editorState.startAt = nextStart || now;
+        editorState.endAt = nextEnd;
         syncEditorInputs();
         saveEditorState();
+        setEditorTip("时间配置已应用。", "ok");
+        return true;
       }
 
       function getWindowStatus(now) {
@@ -683,8 +717,24 @@
         el.bannerClose.addEventListener("click", handleClose);
         el.bannerBtn.addEventListener("click", openLink);
         el.applyEditorBtn.addEventListener("click", () => {
-          readEditorInputs();
-          render(Date.now());
+          if (readEditorInputs()) {
+            render(Date.now());
+          }
+        });
+        el.startInput.addEventListener("change", () => {
+          if (readEditorInputs()) {
+            render(Date.now());
+          }
+        });
+        el.endInput.addEventListener("change", () => {
+          if (readEditorInputs()) {
+            render(Date.now());
+          }
+        });
+        el.bannerTextInput.addEventListener("change", () => {
+          if (readEditorInputs()) {
+            render(Date.now());
+          }
         });
         el.resumeBtn.addEventListener("click", resumeCycle);
         el.resetBtn.addEventListener("click", resetCycle);
@@ -696,6 +746,7 @@
           editorState.startAt = defaults.startAt;
           editorState.endAt = defaults.endAt;
           syncEditorInputs();
+          setEditorTip("");
           runtimeState = createInitialState();
           render(Date.now());
         });
