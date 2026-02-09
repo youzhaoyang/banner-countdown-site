@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>论文阅读报告（深度版）</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --paper: #fff;
+      --ink: #1f2937;
+      --muted: #5b6472;
+      --brand: #0f766e;
+      --brand2: #0b4f4a;
+      --line: #e5e7eb;
+      --good: #065f46;
+      --warn: #92400e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      background: radial-gradient(circle at 0 0, #e7f6f3 0, var(--bg) 44%);
+      color: var(--ink);
+      line-height: 1.7;
+    }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 24px 16px 44px; }
+    .hero {
+      background: linear-gradient(135deg, var(--brand), var(--brand2));
+      color: #fff;
+      border-radius: 14px;
+      padding: 22px;
+      box-shadow: 0 12px 30px rgba(15,118,110,.2);
+    }
+    h1 { margin: 0 0 8px; font-size: 30px; }
+    h2 { margin: 24px 0 10px; font-size: 22px; }
+    h3 { margin: 0 0 8px; font-size: 18px; }
+    .meta { opacity: .92; font-size: 14px; }
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: 12px;
+    }
+    .grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+    .tag {
+      display: inline-block;
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid #99f6e4;
+      background: #e6fffb;
+      color: var(--brand);
+      margin-bottom: 8px;
+    }
+    ul { margin: 8px 0 0 20px; }
+    li { margin: 4px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { border: 1px solid var(--line); padding: 8px; vertical-align: top; }
+    th { background: #f2fbf9; text-align: left; }
+    .good { color: var(--good); font-weight: 600; }
+    .warn { color: var(--warn); font-weight: 600; }
+    .muted { color: var(--muted); }
+    .footer {
+      margin-top: 28px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+      padding-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <h1>论文阅读报告（深度版）</h1>
+      <div class="meta">路径：/Users/youzhaoyang/codex_clean/reports/论文阅读报告_深度版.html ｜ 生成日期：2026-02-09</div>
+      <p>结构采用“总-分-总”：先给总判断，再按技术线拆解，最后收敛成可执行路线，并为每条观点补上应用示例说明作用。</p>
+    </section>
+
+    <h2>总：核心判断</h2>
+    <div class="grid">
+      <div class="card">
+        <div class="tag">总判断 1</div>
+        <h3>从“模型能力”转向“系统可持续”</h3>
+        <p class="muted">论文共识是：不只比单点分数，而是同时优化性能、稳定性、成本。</p>
+      </div>
+      <div class="card">
+        <div class="tag">总判断 2</div>
+        <h3>长上下文是能力上限，稳定性是上线下限</h3>
+        <p class="muted">MoBA/NSA/MiniMax-01解决上限，Vending-Bench/Verifier解决下限。</p>
+      </div>
+      <div class="card">
+        <div class="tag">总判断 3</div>
+        <h3>异构模型将成为默认架构</h3>
+        <p class="muted">SLM承担高频标准任务，LLM承担高难与异常任务，才能规模化。</p>
+      </div>
+    </div>
+
+    <h2>分：三条主线的深度提炼</h2>
+
+    <section class="card">
+      <h3>A. 长上下文效率主线（MoBA / NSA / MiniMax-01）</h3>
+      <ul>
+        <li><b>MoBA：</b>把MoE思想用于注意力块路由，让模型动态决定“看哪里”，减少固定窗口偏置。</li>
+        <li><b>NSA：</b>强调“可训练 + 硬件对齐”，避免只在推理快、训练不可用的伪优化。</li>
+        <li><b>MiniMax-01：</b>展示百万级上下文能力需要算法和系统并行协作，而非单纯改公式。</li>
+      </ul>
+      <p><span class="good">示例作用 1（代码库问答）</span>：长上下文+稀疏注意力可减少跨文件依赖遗漏，回答更完整，减少“局部正确、全局错误”。</p>
+      <p><span class="good">示例作用 2（长合同审阅）</span>：先全局扫描再局部核验，可显著降低漏条款风险，同时控制推理成本。</p>
+    </section>
+
+    <section class="card">
+      <h3>B. Agent稳定性主线（Alita / Vending-Bench / LLM Verifier）</h3>
+      <ul>
+        <li><b>Alita：</b>“少预定义 + 自进化”可获得较强泛化，说明复杂工具链不是唯一出路。</li>
+        <li><b>Vending-Bench：</b>暴露长期运行易出现状态漂移、目标偏航、循环失控，不是短期评测能发现的。</li>
+        <li><b>LLM Verifier：</b>把LLM放在验证层，常比端到端替代更稳，尤其适合OCR/视觉抽取链路。</li>
+      </ul>
+      <p><span class="warn">示例作用 3（自动化运营Agent）</span>：增加“状态快照-异常回滚-目标重对齐”，可把长周期失败率从不可控降到可监控。</p>
+      <p><span class="warn">示例作用 4（门店信息抽取）</span>：保留原OCR流程，仅新增LLM校验器，即可提升关键字段准确率而不重构全系统。</p>
+    </section>
+
+    <section class="card">
+      <h3>C. 采用与经济性主线（Economic Index / How People Use ChatGPT / SLM）</h3>
+      <ul>
+        <li><b>How People Use ChatGPT：</b>高频任务聚焦写作、信息获取、实用建议，这些最容易形成稳定价值。</li>
+        <li><b>Economic Index：</b>采用快但结构不均，收益可能向高数字化与高技能地区/岗位集中。</li>
+        <li><b>SLM Future：</b>在重复窄任务中，SLM通常更具性价比，异构调度是长期解。</li>
+      </ul>
+      <p><span class="good">示例作用 5（企业Copilot）</span>：把模板写作/FAQ路由到SLM，把复杂归因和跨文档推理交给LLM，可明显降本。</p>
+      <p><span class="good">示例作用 6（推广路径）</span>：先上线ROI可量化流程，再扩高风险自动化，能减少组织阻力并提高复用率。</p>
+    </section>
+
+    <h2>关键论文速览表（加强版）</h2>
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>论文</th>
+            <th>最关键贡献</th>
+            <th>主要风险/边界</th>
+            <th>建议落地方向</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Alita</td><td>最少预定义的可扩展Agent</td><td>自进化质量依赖工具发现与评估机制</td><td>内部任务编排平台</td></tr>
+          <tr><td>MoBA</td><td>动态块路由注意力</td><td>路由策略和稀疏比例需按场景调参</td><td>长文档/长代码上下文处理</td></tr>
+          <tr><td>NSA</td><td>可训练且硬件友好的稀疏注意力</td><td>工程实现复杂度高于普通attention</td><td>长上下文训练与推理统一优化</td></tr>
+          <tr><td>MiniMax-01</td><td>百万级上下文与MoE系统化实现</td><td>基础设施要求高</td><td>超长检索与多模态复杂任务</td></tr>
+          <tr><td>Vending-Bench</td><td>长期一致性评测框架</td><td>模拟环境与真实业务仍有差距</td><td>上线前长期稳定性压测</td></tr>
+          <tr><td>LLM Verifier</td><td>LLM做校验层提高抽取质量</td><td>仍受上游OCR质量影响</td><td>视觉/OCR关键字段校验</td></tr>
+          <tr><td>Economic Index</td><td>采用结构与区域差异洞察</td><td>不同产品和地区可比性有限</td><td>制定分层推广策略</td></tr>
+          <tr><td>How People Use ChatGPT</td><td>真实使用行为画像</td><td>平台用户结构会影响结论外推</td><td>高频入口设计与运营</td></tr>
+          <tr><td>SLM Future</td><td>异构模型经济性论证</td><td>立场文属性较强</td><td>LLM/SLM分层路由体系</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>总：收敛成执行原则</h2>
+    <div class="card">
+      <ol>
+        <li><b>原则1：</b>评估模型时至少同时看“准确率、长周期稳定性、单位任务成本”。</li>
+        <li><b>原则2：</b>上线Agent前先做长时压测和异常恢复演练，再开自动执行权限。</li>
+        <li><b>原则3：</b>默认采用异构调度，不追求单模型覆盖所有任务。</li>
+        <li><b>原则4：</b>复杂链路优先采用“LLM验证层”渐进改造，降低系统替换风险。</li>
+      </ol>
+    </div>
+
+    <div class="footer">
+      备注：本版强调“作用解释”和“可执行性”；如需我可以继续输出按你业务定制的“90天实施甘特图版”。
+    </div>
+  </div>
+</body>
+</html>
