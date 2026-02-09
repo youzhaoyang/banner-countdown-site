@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>每周执行看板（90天）</title>
+  <style>
+    :root { --bg:#f6f8fb; --paper:#fff; --ink:#1f2937; --muted:#5b6472; --line:#e5e7eb; --brand:#0f766e; }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);line-height:1.6}
+    .wrap{max-width:1180px;margin:0 auto;padding:22px 16px 40px}
+    .hero{background:linear-gradient(135deg,#0f766e,#0b4f4a);color:#fff;border-radius:12px;padding:18px 20px}
+    h1{margin:0 0 6px;font-size:28px} h2{margin:22px 0 10px;font-size:20px}
+    .meta{font-size:14px;opacity:.92}
+    .card{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:12px}
+    table{width:100%;border-collapse:collapse;font-size:14px}
+    th,td{border:1px solid var(--line);padding:8px;vertical-align:top}
+    th{background:#f0faf8;text-align:left}
+    .muted{color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <h1>每周执行看板（负责人 / 输入 / 输出 / 验收标准）</h1>
+      <div class="meta">适配：论文结论落地90天计划 ｜ 日期：2026-02-09</div>
+    </section>
+
+    <div class="card">
+      <p><b>角色约定：</b>PM（产品经理）/ AE（AI工程师）/ BE（后端）/ DE（数据工程）/ QA（测试）/ OPS（运维）</p>
+    </div>
+
+    <h2>第1-4周（P0：基线与护栏）</h2>
+    <div class="card">
+      <table>
+        <thead><tr><th>周次</th><th>负责人</th><th>输入</th><th>输出</th><th>验收标准</th></tr></thead>
+        <tbody>
+          <tr><td>W1</td><td>PM + AE</td><td>现有流程清单、历史工单、成本账单</td><td>任务分层表（规则/复杂/高风险）</td><td>覆盖≥90%核心流程；分层可复核</td></tr>
+          <tr><td>W2</td><td>DE + QA</td><td>样本数据、失败案例、日志</td><td>离线评测集与基线分数</td><td>建立准确率/成本/时延三指标基线</td></tr>
+          <tr><td>W3</td><td>AE + BE</td><td>Agent执行链路、状态字段定义</td><td>状态快照与回滚机制</td><td>异常场景可在1次回滚内恢复</td></tr>
+          <tr><td>W4</td><td>QA + OPS</td><td>压测脚本、监控告警规则</td><td>长周期压测报告（>6h）</td><td>连续运行失败率较基线下降≥30%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>第5-8周（P1：异构路由与长上下文增强）</h2>
+    <div class="card">
+      <table>
+        <thead><tr><th>周次</th><th>负责人</th><th>输入</th><th>输出</th><th>验收标准</th></tr></thead>
+        <tbody>
+          <tr><td>W5</td><td>AE</td><td>任务分层表、模型候选列表</td><td>LLM/SLM路由规则v1</td><td>规则任务命中SLM比例≥60%</td></tr>
+          <tr><td>W6</td><td>AE + QA</td><td>灰度流量、A/B方案</td><td>路由灰度结果</td><td>成本下降≥20%，质量不低于基线</td></tr>
+          <tr><td>W7</td><td>BE + AE</td><td>长文档/长代码任务样本</td><td>长上下文后端接入（稀疏/混合）</td><td>长任务正确率提升≥10%</td></tr>
+          <tr><td>W8</td><td>QA + OPS</td><td>线上指标、失败样本</td><td>调参与回归测试报告</td><td>无P0故障；回归通过率≥95%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>第9-13周（P2：扩面与治理）</h2>
+    <div class="card">
+      <table>
+        <thead><tr><th>周次</th><th>负责人</th><th>输入</th><th>输出</th><th>验收标准</th></tr></thead>
+        <tbody>
+          <tr><td>W9</td><td>PM + BE</td><td>试点部门反馈、运营数据</td><td>扩面方案（部门/流程优先级）</td><td>明确2-3条扩面路径</td></tr>
+          <tr><td>W10</td><td>AE + DE</td><td>OCR/抽取链路、低置信度样本</td><td>Verifier验证层上线</td><td>关键字段误差下降≥20%</td></tr>
+          <tr><td>W11</td><td>OPS + QA</td><td>告警阈值、应急预案</td><td>SOP与回滚手册</td><td>演练通过，平均恢复时间&lt;15分钟</td></tr>
+          <tr><td>W12</td><td>PM + 全员</td><td>阶段指标、成本曲线</td><td>阶段复盘与下一季度计划</td><td>达成3项核心KPI中的2项以上</td></tr>
+          <tr><td>W13</td><td>PM</td><td>复盘结论、资源预算</td><td>Q2路线图与资源申请</td><td>管理层评审通过并排期落地</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>每周例会模板（建议）</h2>
+      <ul>
+        <li>本周目标完成率（%）</li>
+        <li>关键指标变化：准确率 / 成本 / 时延 / 稳定性</li>
+        <li>Top3失败案例与修复状态</li>
+        <li>下周风险与资源阻塞</li>
+      </ul>
+      <p class="muted">使用方式：每周五更新一次本页，保持URL不变，便于团队共享与追踪。</p>
+    </div>
+  </div>
+</body>
+</html>
