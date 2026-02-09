@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>论文阅读报告（精炼版）</title>
+  <style>
+    :root {
+      --bg: #f4f7f8;
+      --paper: #ffffff;
+      --ink: #1f2937;
+      --muted: #5b6472;
+      --brand: #0f766e;
+      --line: #dde3e8;
+      --warn: #92400e;
+      --ok: #065f46;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: radial-gradient(circle at 0% 0%, #e7f6f3 0, var(--bg) 42%);
+      font-family: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      line-height: 1.65;
+    }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 24px 16px 44px; }
+    .hero {
+      background: linear-gradient(135deg, #0f766e, #0b4f4a);
+      color: #fff;
+      border-radius: 14px;
+      padding: 20px 22px;
+      box-shadow: 0 12px 28px rgba(15, 118, 110, 0.22);
+    }
+    h1 { margin: 0 0 6px; font-size: 30px; }
+    .meta { font-size: 14px; opacity: .92; }
+    h2 { margin: 24px 0 10px; font-size: 22px; }
+    h3 { margin: 2px 0 8px; font-size: 18px; }
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: 12px;
+    }
+    .grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+    .tag {
+      display: inline-block;
+      font-size: 12px;
+      color: var(--brand);
+      background: #e6fffb;
+      border: 1px solid #99f6e4;
+      border-radius: 999px;
+      padding: 2px 8px;
+      margin-bottom: 8px;
+    }
+    ul { margin: 8px 0 0 20px; padding: 0; }
+    li { margin: 4px 0; }
+    .muted { color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { border: 1px solid var(--line); padding: 8px; vertical-align: top; }
+    th { background: #f0f7f6; text-align: left; }
+    .ok { color: var(--ok); font-weight: 600; }
+    .warn { color: var(--warn); font-weight: 600; }
+    .footer {
+      margin-top: 28px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+      padding-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <h1>论文阅读报告（精炼版）</h1>
+      <div class="meta">目录：/Users/youzhaoyang/Desktop/论文 ｜ 覆盖 11 篇 PDF ｜ 生成时间：2026-02-09</div>
+      <p>目标：在“长上下文、Agent 稳定性、产业落地”三条主线上，提炼可直接用于技术路线和项目决策的重点。</p>
+    </section>
+
+    <h2>一页结论（继续提炼）</h2>
+    <div class="grid">
+      <div class="card">
+        <div class="tag">结论 1</div>
+        <h3>下一代模型竞争核心 = 长上下文效率</h3>
+        <p class="muted">MoBA、NSA、MiniMax-01共同指向：仅靠堆算力不可持续，必须“稀疏/混合注意力 + 并行通信工程”协同。</p>
+      </div>
+      <div class="card">
+        <div class="tag">结论 2</div>
+        <h3>Agent 已从“会做”进入“稳定做”阶段</h3>
+        <p class="muted">Vending-Bench 显示长期任务易失稳；Alita 证明简化架构可提高泛化，但生产仍需状态校验与恢复机制。</p>
+      </div>
+      <div class="card">
+        <div class="tag">结论 3</div>
+        <h3>商业化关键约束已变成成本结构</h3>
+        <p class="muted">Economic Index + ChatGPT usage + SLM 论文：高频场景需异构模型调度，不是“一把大模型打天下”。</p>
+      </div>
+      <div class="card">
+        <div class="tag">结论 4</div>
+        <h3>推荐路线：LLM 负责难题，SLM 负责高频</h3>
+        <p class="muted">将复杂推理、低频异常保留给大模型；将重复、流程化任务下沉到小模型，提升吞吐并控成本。</p>
+      </div>
+    </div>
+
+    <h2>逐篇重点（精炼版）</h2>
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>论文</th>
+            <th>核心贡献</th>
+            <th>最值得记住的一点</th>
+            <th>落地建议</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Alita</td>
+            <td>最少预定义 + 自我进化的通用 Agent</td>
+            <td>简单架构不必然弱，反而可能更泛化</td>
+            <td>先设计“自扩展机制”，再补工具</td>
+          </tr>
+          <tr>
+            <td>Economic Index</td>
+            <td>企业 AI 采用的地域/任务分布画像</td>
+            <td>采用快但不均衡，自动化委托上升</td>
+            <td>优先改造 ROI 清晰的流程节点</td>
+          </tr>
+          <tr>
+            <td>MoBA</td>
+            <td>MoE 思想迁移到注意力路由</td>
+            <td>可在效率与效果之间平衡且可切换</td>
+            <td>长文档/仓库分析优先试点</td>
+          </tr>
+          <tr>
+            <td>LLM Verifier Agent</td>
+            <td>OCR 后增加 LLM 验证层纠错</td>
+            <td>LLM 作为“验证器”比替代器更稳</td>
+            <td>先做高价值字段的二次校验</td>
+          </tr>
+          <tr>
+            <td>MiniMax-01</td>
+            <td>Lightning Attention + MoE +系统优化</td>
+            <td>长上下文能力依赖算法与系统联合设计</td>
+            <td>评估时加入通信与并行成本指标</td>
+          </tr>
+          <tr>
+            <td>Vending-Bench</td>
+            <td>长期一致性基准（超长序列）</td>
+            <td>失败多由状态漂移与策略偏航触发</td>
+            <td>上线前做长周期稳定性压测</td>
+          </tr>
+          <tr>
+            <td>NSA</td>
+            <td>可训练且硬件对齐的稀疏注意力</td>
+            <td>训练可用 + 硬件高效必须同时成立</td>
+            <td>选型时同时看精度、吞吐、训练稳定</td>
+          </tr>
+          <tr>
+            <td>LLM Agents 硕士论文</td>
+            <td>Agent 自动化体系综述与方法框架</td>
+            <td>适合作为架构与评估 checklist</td>
+            <td>用于团队规范和方案评审模板</td>
+          </tr>
+          <tr>
+            <td>How People Use ChatGPT</td>
+            <td>真实使用行为与任务结构统计</td>
+            <td>写作/信息/实用建议是主流入口</td>
+            <td>产品入口优先围绕高频任务</td>
+          </tr>
+          <tr>
+            <td>SLM Future</td>
+            <td>小模型在 Agent 场景的经济性论证</td>
+            <td>异构模型是可持续路径</td>
+            <td>建立 LLM→SLM 迁移策略</td>
+          </tr>
+          <tr>
+            <td>神经网络与深度学习</td>
+            <td>系统化基础理论教材</td>
+            <td>前沿理解速度取决于底层数学与优化基础</td>
+            <td>作为团队统一基础学习材料</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>跨论文“高价值提炼”</h2>
+    <div class="card">
+      <ul>
+        <li><span class="ok">技术共识：</span>长上下文不是单一算法问题，而是注意力机制、并行策略、通信重叠、硬件适配的系统工程问题。</li>
+        <li><span class="warn">关键风险：</span>Agent 的失败常是“渐进失稳”，需要可观测状态、强约束执行与自动恢复，不是只看单轮准确率。</li>
+        <li><span class="ok">产品共识：</span>真实用户高频需求集中在写作、信息整合、决策辅助；这类场景最容易形成稳定留存。</li>
+        <li><span class="ok">商业共识：</span>成本约束将强迫系统走向异构：大模型负责复杂推理，小模型承接高频流程任务。</li>
+      </ul>
+    </div>
+
+    <h2>可执行建议（按优先级）</h2>
+    <div class="card">
+      <ol>
+        <li><b>P0：</b>建立“任务分层路由”策略：按复杂度/风险/时延将请求路由到 LLM 或 SLM。</li>
+        <li><b>P0：</b>为 Agent 增加三层防线：状态快照、异常回滚、周期性目标重对齐。</li>
+        <li><b>P1：</b>长上下文场景（代码库、长文档）引入稀疏/混合注意力方案做压测对比。</li>
+        <li><b>P1：</b>视觉或 OCR 链路优先加“LLM 验证层”，先优化关键字段精度。</li>
+        <li><b>P2：</b>团队学习路径采用“教材打底 + 前沿论文专题复盘”的组合机制。</li>
+      </ol>
+    </div>
+
+    <div class="footer">
+      本报告为阅读提炼版，强调决策可用性；如需可继续输出“按你当前业务场景定制的路线图版本（季度计划）”。
+    </div>
+  </div>
+</body>
+</html>
