@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>论文结论到业务落地：90天路线图</title>
+  <style>
+    :root {
+      --bg:#f6f8fb; --paper:#fff; --ink:#1f2937; --muted:#5b6472;
+      --brand:#0f766e; --brand2:#0b4f4a; --line:#e5e7eb;
+      --p0:#b91c1c; --p1:#92400e; --p2:#065f46;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif;background:radial-gradient(circle at 0 0,#e8f7f4 0,var(--bg) 44%);color:var(--ink);line-height:1.65}
+    .wrap{max-width:1160px;margin:0 auto;padding:24px 16px 44px}
+    .hero{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;border-radius:14px;padding:22px;box-shadow:0 12px 30px rgba(15,118,110,.2)}
+    h1{margin:0 0 8px;font-size:30px} h2{margin:24px 0 10px;font-size:22px} h3{margin:0 0 8px;font-size:18px}
+    .meta{opacity:.92;font-size:14px}
+    .card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:12px}
+    .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+    .tag{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid #99f6e4;background:#e6fffb;color:var(--brand);margin-bottom:8px}
+    ul{margin:8px 0 0 20px} li{margin:4px 0}
+    table{width:100%;border-collapse:collapse;font-size:14px} th,td{border:1px solid var(--line);padding:8px;vertical-align:top} th{background:#f2fbf9;text-align:left}
+    .p0{color:var(--p0);font-weight:700}.p1{color:var(--p1);font-weight:700}.p2{color:var(--p2);font-weight:700}
+    .muted{color:var(--muted)} .footer{margin-top:28px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;padding-top:10px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <h1>90天落地路线图（基于论文深度提炼）</h1>
+      <div class="meta">路径：/Users/youzhaoyang/codex_clean/reports/论文阅读报告_90天落地路线图.html ｜ 日期：2026-02-09</div>
+      <p>目标：把“长上下文、Agent稳定性、异构模型降本”三条结论，转成90天内可上线、可量化的实施计划。</p>
+    </section>
+
+    <h2>总目标与成功标准</h2>
+    <div class="grid">
+      <div class="card"><div class="tag">目标 A</div><h3>性能</h3><p class="muted">长文档/长代码任务正确率显著提升，减少上下文截断导致的遗漏。</p></div>
+      <div class="card"><div class="tag">目标 B</div><h3>稳定</h3><p class="muted">Agent 连续运行失败率降低，可回滚、可恢复、可审计。</p></div>
+      <div class="card"><div class="tag">目标 C</div><h3>成本</h3><p class="muted">建立LLM/SLM路由，降低高频任务token成本并保持体验。</p></div>
+    </div>
+
+    <div class="card">
+      <h3>90天 KPI（建议）</h3>
+      <ul>
+        <li>长上下文任务成功率提升 ≥ 20%。</li>
+        <li>Agent 长周期任务中断率下降 ≥ 50%。</li>
+        <li>高频流程任务单位成本下降 30%-60%。</li>
+        <li>关键链路（OCR/抽取）人工复核量下降 ≥ 30%。</li>
+      </ul>
+    </div>
+
+    <h2>分阶段计划（总-分-总执行）</h2>
+    <div class="card">
+      <table>
+        <thead><tr><th>阶段</th><th>时间</th><th>核心动作</th><th>产出物</th><th>验收指标</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="p0">P0 基线建设</span></td>
+            <td>第1-2周</td>
+            <td>梳理任务分层、建立评测集、接入日志与成本看板</td>
+            <td>任务分类表、评测脚本、观测仪表盘</td>
+            <td>100%关键流程可观测</td>
+          </tr>
+          <tr>
+            <td><span class="p0">P0 稳定性护栏</span></td>
+            <td>第3-4周</td>
+            <td>为Agent加状态快照、异常回滚、目标重对齐</td>
+            <td>护栏中间件、恢复策略手册</td>
+            <td>连续运行失败率下降30%+</td>
+          </tr>
+          <tr>
+            <td><span class="p1">P1 异构路由</span></td>
+            <td>第5-7周</td>
+            <td>上线LLM/SLM路由（复杂任务→LLM，重复任务→SLM）</td>
+            <td>路由策略、灰度开关、A/B结果</td>
+            <td>成本下降20%+且质量不降</td>
+          </tr>
+          <tr>
+            <td><span class="p1">P1 长上下文增强</span></td>
+            <td>第8-10周</td>
+            <td>长文档/代码链路接入稀疏或混合注意力后端并压测</td>
+            <td>性能对比报告、容量建议</td>
+            <td>长任务正确率提升15%+</td>
+          </tr>
+          <tr>
+            <td><span class="p2">P2 业务扩面</span></td>
+            <td>第11-13周</td>
+            <td>从1-2个试点流程扩展到多部门流程并固化SOP</td>
+            <td>上线清单、运维手册、治理规范</td>
+            <td>稳定运行2周+，复盘闭环</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>关键设计（对应论文结论）</h2>
+    <div class="card">
+      <h3>1) 路由策略模板（SLM/LLM）</h3>
+      <ul>
+        <li>规则任务（改写、模板填充、FAQ）默认走SLM。</li>
+        <li>跨文档归因、多步推理、低容错任务走LLM。</li>
+        <li>置信度低或冲突结果自动升级到LLM复核。</li>
+      </ul>
+      <p class="muted">作用示例：客服工单摘要先SLM批处理，遇到法律条款争议自动升级LLM，兼顾吞吐与准确率。</p>
+    </div>
+
+    <div class="card">
+      <h3>2) Agent护栏模板（长期稳定）</h3>
+      <ul>
+        <li>每N步写入状态快照：目标、当前资源、下一步计划。</li>
+        <li>出现“连续无效动作”触发回滚到最近稳定点。</li>
+        <li>每轮执行前后做目标一致性检查（防偏航）。</li>
+      </ul>
+      <p class="muted">作用示例：自动运营Agent出现重复下单趋势时，系统自动回滚并切入人工审批模式。</p>
+    </div>
+
+    <div class="card">
+      <h3>3) 验证层模板（Verifier）</h3>
+      <ul>
+        <li>保留原OCR/规则模型，只新增LLM验证层进行冲突仲裁。</li>
+        <li>关键字段（名称、地址、电话）输出置信度与解释。</li>
+        <li>低置信度样本进入人工复核池，反哺训练集。</li>
+      </ul>
+      <p class="muted">作用示例：门店识别中“0/O、1/I”混淆通过LLM语义校验修正，减少误收录。</p>
+    </div>
+
+    <h2>风险与应对</h2>
+    <div class="card">
+      <table>
+        <thead><tr><th>风险</th><th>触发信号</th><th>应对策略</th></tr></thead>
+        <tbody>
+          <tr><td>模型路由错配</td><td>SLM错误率上升</td><td>提高升级阈值，回滚到LLM优先策略</td></tr>
+          <tr><td>长期漂移失稳</td><td>重复动作、目标偏离</td><td>快照回滚+强制重规划+人工兜底</td></tr>
+          <tr><td>成本失控</td><td>LLM调用占比异常上涨</td><td>按任务类型限流，重训路由器</td></tr>
+          <tr><td>离线好线上差</td><td>线上投诉与复核增加</td><td>建立线上回放评测集，按周校准</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>最终交付清单</h2>
+    <div class="card">
+      <ol>
+        <li>评测与观测：任务评测集、稳定性压测脚本、成本看板。</li>
+        <li>平台能力：LLM/SLM路由器、Agent护栏中间件、Verifier服务。</li>
+        <li>治理文档：上线SOP、回滚预案、模型选择准则。</li>
+      </ol>
+    </div>
+
+    <div class="footer">这版是可执行路线图；下一步可继续细化为“每周任务分配到具体人/角色”的执行排期表。</div>
+  </div>
+</body>
+</html>
