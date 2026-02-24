@@ -47,6 +47,11 @@ const PHASE = {
   PAUSED: "PAUSED"
 };
 
+const DISPLAY_STRATEGY = {
+  INTERVAL: "interval",
+  ONCE: "once"
+};
+
 const showDurationMs = Math.max(0, Number(CONFIG.cycleConfig?.showHour || 0) * 3600 * 1000);
 const hideDurationMs = Math.max(0, Number(CONFIG.cycleConfig?.hideSecond || 0) * 1000);
 const editorStorageKey = `${CONFIG.storageKey}_editor`;
@@ -80,7 +85,9 @@ function createInitialState(now = Date.now()) {
     phase: PHASE.SHOW,
     phaseStartAt: now,
     cyclesCompleted: 0,
-    pausedByClose: false
+    pausedByClose: false,
+    lastPolicyShowAt: null,
+    policyWindowKey: null
   };
 }
 
@@ -95,6 +102,8 @@ function createDefaultEditorState(now = Date.now()) {
     btnBackground: CONFIG.btStyle?.backgroundImage || CONFIG.btStyle?.background || "",
     btnBorderColor: "",
     btnRadius: CONFIG.btStyle?.borderRadius || "",
+    displayStrategyMode: DISPLAY_STRATEGY.INTERVAL,
+    displayIntervalHour: 2,
     audienceEnabled: Boolean(CONFIG.audienceConfig?.enabled),
     includeLevelIds: Array.isArray(CONFIG.audienceConfig?.includeLevelIds) ? CONFIG.audienceConfig.includeLevelIds.slice() : [],
     excludeLevelIds: Array.isArray(CONFIG.audienceConfig?.excludeLevelIds) ? CONFIG.audienceConfig.excludeLevelIds.slice() : []
@@ -114,7 +123,9 @@ function readState() {
       phase,
       phaseStartAt: Number(parsed.phaseStartAt) || Date.now(),
       cyclesCompleted: Number(parsed.cyclesCompleted) || 0,
-      pausedByClose: Boolean(parsed.pausedByClose)
+      pausedByClose: Boolean(parsed.pausedByClose),
+      lastPolicyShowAt: Number(parsed.lastPolicyShowAt) || null,
+      policyWindowKey: parsed.policyWindowKey ? String(parsed.policyWindowKey) : null
     };
   } catch (_e) {
     return null;
@@ -154,6 +165,10 @@ function readEditorState() {
     const text = String(parsed.text || CONFIG.text || "");
     const startAt = Number(parsed.startAt) || defaults.startAt;
     const endAt = Number(parsed.endAt) || defaults.endAt;
+    const parsedStrategyMode = parsed.displayStrategyMode === DISPLAY_STRATEGY.ONCE
+      ? DISPLAY_STRATEGY.ONCE
+      : DISPLAY_STRATEGY.INTERVAL;
+    const parsedIntervalHour = Number(parsed.displayIntervalHour);
     return {
       text,
       startAt,
@@ -164,6 +179,8 @@ function readEditorState() {
       btnBackground: String(parsed.btnBackground || CONFIG.btStyle?.backgroundImage || CONFIG.btStyle?.background || ""),
       btnBorderColor: String(parsed.btnBorderColor || ""),
       btnRadius: String(parsed.btnRadius || CONFIG.btStyle?.borderRadius || ""),
+      displayStrategyMode: parsedStrategyMode,
+      displayIntervalHour: Number.isFinite(parsedIntervalHour) && parsedIntervalHour > 0 ? parsedIntervalHour : defaults.displayIntervalHour,
       audienceEnabled: parsed.audienceEnabled == null ? Boolean(CONFIG.audienceConfig?.enabled) : Boolean(parsed.audienceEnabled),
       includeLevelIds: parseIdList(parsed.includeLevelIds),
       excludeLevelIds: parseIdList(parsed.excludeLevelIds)
@@ -230,6 +247,45 @@ function formatWindowCountdown(windowStatus) {
     return `距结束 ${formatDuration(windowStatus.remainingMs)}`;
   }
   return "已结束";
+}
+
+function getWindowKey(editorState) {
+  return `${editorState.startAt}-${editorState.endAt}`;
+}
+
+function getDisplayStrategyAccess(editorState, runtimeState) {
+  const mode = editorState.displayStrategyMode || DISPLAY_STRATEGY.INTERVAL;
+
+  if (runtimeState.phase !== PHASE.SHOW) {
+    return { allowed: true, reason: "非展示阶段" };
+  }
+
+  // This SHOW phase has already passed strategy gating.
+  if (runtimeState.lastPolicyShowAt === runtimeState.phaseStartAt) {
+    return { allowed: true, reason: "本轮展示已准入" };
+  }
+
+  if (mode === DISPLAY_STRATEGY.ONCE) {
+    const windowKey = getWindowKey(editorState);
+    const shownInCurrentWindow = runtimeState.policyWindowKey === windowKey && Boolean(runtimeState.lastPolicyShowAt);
+    if (shownInCurrentWindow) {
+      return { allowed: false, reason: "活动期间仅展示一次（已展示）" };
+    }
+    return { allowed: true, reason: "活动期间仅展示一次（首展示）" };
+  }
+
+  const intervalHour = Number(editorState.displayIntervalHour || 0);
+  const intervalMs = intervalHour > 0 ? intervalHour * 3600 * 1000 : 0;
+  if (!runtimeState.lastPolicyShowAt || intervalMs <= 0) {
+    return { allowed: true, reason: "满足间隔展示策略" };
+  }
+
+  const elapsed = runtimeState.phaseStartAt - runtimeState.lastPolicyShowAt;
+  if (elapsed >= intervalMs) {
+    return { allowed: true, reason: "满足间隔展示策略" };
+  }
+
+  return { allowed: false, reason: `间隔未到（剩余${formatDuration(intervalMs - elapsed)}）` };
 }
 
 function getAudienceAccess(editorState) {
@@ -325,6 +381,8 @@ export default function App() {
       btnBackground: state.btnBackground || "",
       btnBorderColor: state.btnBorderColor || "",
       btnRadius: state.btnRadius || "",
+      displayStrategyMode: state.displayStrategyMode || DISPLAY_STRATEGY.INTERVAL,
+      displayIntervalHour: String(state.displayIntervalHour ?? 2),
       includeIdsInput: state.includeLevelIds.join(","),
       excludeIdsInput: state.excludeLevelIds.join(","),
       audienceEnabled: Boolean(state.audienceEnabled)
@@ -350,6 +408,10 @@ export default function App() {
 
   const windowStatus = useMemo(() => getWindowStatus(editorState, now), [editorState, now]);
   const audienceAccess = useMemo(() => getAudienceAccess(editorState), [editorState]);
+  const displayStrategyAccess = useMemo(
+    () => getDisplayStrategyAccess(editorState, runtimeState),
+    [editorState, runtimeState]
+  );
 
   const gradient =
     CONFIG.bg && CONFIG.bg.length
@@ -380,7 +442,28 @@ export default function App() {
   const isShowing = runtimeState.phase === PHASE.SHOW;
   const canShowByWindow = windowStatus.status === "ACTIVE";
   const canShowByAudience = audienceAccess.allowed;
-  const showBanner = isShowing && canShowByWindow && canShowByAudience;
+  const canShowByDisplayStrategy = displayStrategyAccess.allowed;
+  const showBanner = isShowing && canShowByWindow && canShowByAudience && canShowByDisplayStrategy;
+
+  useEffect(() => {
+    if (!showBanner) return;
+    if (runtimeState.lastPolicyShowAt === runtimeState.phaseStartAt) return;
+    const windowKey = getWindowKey(editorState);
+    setRuntimeState((prev) => {
+      if (prev.lastPolicyShowAt === prev.phaseStartAt) return prev;
+      return {
+        ...prev,
+        lastPolicyShowAt: prev.phaseStartAt,
+        policyWindowKey: windowKey
+      };
+    });
+  }, [
+    showBanner,
+    runtimeState.phaseStartAt,
+    runtimeState.lastPolicyShowAt,
+    editorState.startAt,
+    editorState.endAt
+  ]);
 
   const applyEditorConfig = () => {
     const nextStart = parseDatetimeLocal(form.startInput);
@@ -391,6 +474,15 @@ export default function App() {
     }
     if (nextEnd <= nextStart) {
       setTip({ text: "结束时间必须晚于开始时间。", type: "error" });
+      return;
+    }
+
+    const nextStrategyMode = form.displayStrategyMode === DISPLAY_STRATEGY.ONCE
+      ? DISPLAY_STRATEGY.ONCE
+      : DISPLAY_STRATEGY.INTERVAL;
+    const nextDisplayIntervalHour = Number(form.displayIntervalHour || 0);
+    if (nextStrategyMode === DISPLAY_STRATEGY.INTERVAL && (!Number.isFinite(nextDisplayIntervalHour) || nextDisplayIntervalHour <= 0)) {
+      setTip({ text: "按间隔展示时，间隔小时必须大于 0。", type: "error" });
       return;
     }
 
@@ -408,6 +500,8 @@ export default function App() {
         "",
       btnBorderColor: String(form.btnBorderColor || "").trim(),
       btnRadius: String(form.btnRadius || "").trim() || CONFIG.btStyle?.borderRadius || "",
+      displayStrategyMode: nextStrategyMode,
+      displayIntervalHour: nextStrategyMode === DISPLAY_STRATEGY.INTERVAL ? nextDisplayIntervalHour : editorState.displayIntervalHour,
       audienceEnabled: Boolean(form.audienceEnabled),
       includeLevelIds: parseIdList(form.includeIdsInput),
       excludeLevelIds: parseIdList(form.excludeIdsInput)
@@ -450,6 +544,8 @@ export default function App() {
       btnBackground: defaults.btnBackground,
       btnBorderColor: defaults.btnBorderColor,
       btnRadius: defaults.btnRadius,
+      displayStrategyMode: defaults.displayStrategyMode,
+      displayIntervalHour: String(defaults.displayIntervalHour),
       includeIdsInput: defaults.includeLevelIds.join(","),
       excludeIdsInput: defaults.excludeLevelIds.join(","),
       audienceEnabled: defaults.audienceEnabled
@@ -471,8 +567,8 @@ export default function App() {
           <button className="banner-btn" type="button" style={bannerButtonStyle} onClick={() => window.open(CONFIG.link, "_blank", "noopener,noreferrer")}>
             {editorState.btnText || CONFIG.btn || "立即体验"}
           </button>
-          <button className="banner-close" type="button" aria-label="Close" onClick={handleClose}>×</button>
         </div>
+        <button className="banner-close" type="button" aria-label="Close" onClick={handleClose}>×</button>
       </div>
 
       <div className="next-countdown" style={{ display: CONFIG.countdownConfig?.showHideCountdown && windowStatus.status !== "ACTIVE" ? "block" : "none" }}>
@@ -489,8 +585,10 @@ export default function App() {
             <div className="stat">已完成循环：<strong>{runtimeState.cyclesCompleted}</strong></div>
             <div className="stat">当前用户等级ID：<strong>{editorState.currentLevelId == null ? "未设置" : editorState.currentLevelId}</strong></div>
             <div className="stat">可见性结果：<strong>{`${audienceAccess.allowed ? "可见" : "不可见"}（${audienceAccess.reason}）`}</strong></div>
+            <div className="stat">展示策略：<strong>{editorState.displayStrategyMode === DISPLAY_STRATEGY.ONCE ? "活动期间仅展示一次" : `活动期每 ${editorState.displayIntervalHour} 小时展示一次`}</strong></div>
+            <div className="stat">策略状态：<strong>{displayStrategyAccess.reason}</strong></div>
             <div className="stat">状态存储键：<code>{CONFIG.storageKey}</code></div>
-            <div className="stat">重置时间：<strong>{formatWindowCountdown(windowStatus)}</strong></div>
+            <div className="stat">活动倒计时：<strong>{formatWindowCountdown(windowStatus)}</strong></div>
           </div>
 
           <div className="editor">
@@ -509,6 +607,29 @@ export default function App() {
             <div className="editor-field">
               <label htmlFor="currentLevelInput">当前用户等级ID</label>
               <input id="currentLevelInput" type="number" min="0" step="1" placeholder="例如 2 / 3 / 89 / 111" value={form.currentLevelInput} onChange={(e) => setForm((p) => ({ ...p, currentLevelInput: e.target.value }))} />
+            </div>
+            <div className="editor-field">
+              <label htmlFor="displayStrategyMode">展示策略</label>
+              <select
+                id="displayStrategyMode"
+                value={form.displayStrategyMode}
+                onChange={(e) => setForm((p) => ({ ...p, displayStrategyMode: e.target.value }))}
+              >
+                <option value={DISPLAY_STRATEGY.INTERVAL}>活动期每 N 小时展示一次</option>
+                <option value={DISPLAY_STRATEGY.ONCE}>活动期间仅展示一次</option>
+              </select>
+            </div>
+            <div className="editor-field">
+              <label htmlFor="displayIntervalHour">展示间隔小时（N）</label>
+              <input
+                id="displayIntervalHour"
+                type="number"
+                min="0.1"
+                step="0.1"
+                disabled={form.displayStrategyMode !== DISPLAY_STRATEGY.INTERVAL}
+                value={form.displayIntervalHour}
+                onChange={(e) => setForm((p) => ({ ...p, displayIntervalHour: e.target.value }))}
+              />
             </div>
             <div className="editor-field">
               <label htmlFor="btnTextInput">右侧按钮文案</label>
