@@ -176,7 +176,7 @@ function formatDuration(ms) {
   const h = Math.floor((total % 86400) / 3600);
   const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
-  return `${d}天 ${String(h).padStart(2, "0")}时 ${String(m).padStart(2, "0")}分 ${String(s).padStart(2, "0")}秒`;
+  return `${d}天${h}小时${m}分${s}秒`;
 }
 
 function getWindowStatus(editorState, now) {
