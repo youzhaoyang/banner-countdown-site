@@ -51,6 +51,30 @@ const showDurationMs = Math.max(0, Number(CONFIG.cycleConfig?.showHour || 0) * 3
 const hideDurationMs = Math.max(0, Number(CONFIG.cycleConfig?.hideSecond || 0) * 1000);
 const editorStorageKey = `${CONFIG.storageKey}_editor`;
 
+function safeStorageGet(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch (_e) {
+    return null;
+  }
+}
+
+function safeStorageSet(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch (_e) {
+    // ignore storage errors to avoid runtime crash in restricted environments
+  }
+}
+
+function safeStorageRemove(key) {
+  try {
+    localStorage.removeItem(key);
+  } catch (_e) {
+    // ignore storage errors to avoid runtime crash in restricted environments
+  }
+}
+
 function createInitialState(now = Date.now()) {
   return {
     phase: PHASE.SHOW,
@@ -79,7 +103,7 @@ function createDefaultEditorState(now = Date.now()) {
 
 function readState() {
   try {
-    const raw = localStorage.getItem(CONFIG.storageKey);
+    const raw = safeStorageGet(CONFIG.storageKey);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object") return null;
@@ -123,7 +147,7 @@ function parseOptionalId(raw) {
 function readEditorState() {
   const defaults = createDefaultEditorState();
   try {
-    const raw = localStorage.getItem(editorStorageKey);
+    const raw = safeStorageGet(editorStorageKey);
     if (!raw) return defaults;
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object") return defaults;
@@ -317,11 +341,11 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(CONFIG.storageKey, JSON.stringify(runtimeState));
+    safeStorageSet(CONFIG.storageKey, JSON.stringify(runtimeState));
   }, [runtimeState]);
 
   useEffect(() => {
-    localStorage.setItem(editorStorageKey, JSON.stringify(editorState));
+    safeStorageSet(editorStorageKey, JSON.stringify(editorState));
   }, [editorState]);
 
   const windowStatus = useMemo(() => getWindowStatus(editorState, now), [editorState, now]);
@@ -412,8 +436,8 @@ export default function App() {
   };
 
   const clearLocalStorage = () => {
-    localStorage.removeItem(CONFIG.storageKey);
-    localStorage.removeItem(editorStorageKey);
+    safeStorageRemove(CONFIG.storageKey);
+    safeStorageRemove(editorStorageKey);
     const defaults = createDefaultEditorState();
     setEditorState(defaults);
     setForm({
