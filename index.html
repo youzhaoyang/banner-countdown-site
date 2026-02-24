@@ -343,6 +343,26 @@
             <input id="currentLevelInput" type="number" min="0" step="1" placeholder="例如 2 / 3 / 89 / 111" />
           </div>
           <div class="editor-field">
+            <label for="btnTextInput">右侧按钮文案</label>
+            <input id="btnTextInput" type="text" placeholder="例如 NEW Kling 3.0 - Exclusive on Higgsfield" />
+          </div>
+          <div class="editor-field">
+            <label for="btnTextColorInput">按钮文字颜色</label>
+            <input id="btnTextColorInput" type="text" placeholder="例如 #cfff21" />
+          </div>
+          <div class="editor-field">
+            <label for="btnBgInput">按钮背景</label>
+            <input id="btnBgInput" type="text" placeholder="例如 #0f1b15 或 linear-gradient(...)" />
+          </div>
+          <div class="editor-field">
+            <label for="btnBorderColorInput">按钮边框颜色</label>
+            <input id="btnBorderColorInput" type="text" placeholder="例如 rgba(188,255,0,0.55)" />
+          </div>
+          <div class="editor-field">
+            <label for="btnRadiusInput">按钮圆角</label>
+            <input id="btnRadiusInput" type="text" placeholder="例如 999px" />
+          </div>
+          <div class="editor-field">
             <label for="includeIdsInput">可见等级ID（逗号分隔）</label>
             <textarea id="includeIdsInput" placeholder="例如 2,3,89,111"></textarea>
           </div>
@@ -360,10 +380,10 @@
         <div id="editorTip" class="editor-tip"></div>
 
         <div class="actions">
-          <button id="applyEditorBtn" class="primary" type="button">Apply Banner Config</button>
-          <button id="resumeBtn" class="primary" type="button">Resume Cycle</button>
-          <button id="resetBtn" type="button">Reset Cycle State</button>
-          <button id="clearBtn" type="button">Clear localStorage Key</button>
+          <button id="applyEditorBtn" class="primary" type="button">应用 Banner 配置</button>
+          <button id="resumeBtn" class="primary" type="button">恢复循环</button>
+          <button id="resetBtn" type="button">重置循环状态</button>
+          <button id="clearBtn" type="button">清空本地存储</button>
         </div>
       </section>
     </main>
@@ -433,6 +453,11 @@
         startInput: document.getElementById("startInput"),
         endInput: document.getElementById("endInput"),
         currentLevelInput: document.getElementById("currentLevelInput"),
+        btnTextInput: document.getElementById("btnTextInput"),
+        btnTextColorInput: document.getElementById("btnTextColorInput"),
+        btnBgInput: document.getElementById("btnBgInput"),
+        btnBorderColorInput: document.getElementById("btnBorderColorInput"),
+        btnRadiusInput: document.getElementById("btnRadiusInput"),
         includeIdsInput: document.getElementById("includeIdsInput"),
         excludeIdsInput: document.getElementById("excludeIdsInput"),
         audienceEnabledInput: document.getElementById("audienceEnabledInput"),
@@ -520,6 +545,11 @@
           startAt: now,
           endAt: now + 2 * 3600 * 1000,
           currentLevelId: 2,
+          btnText: CONFIG.btn || "",
+          btnTextColor: CONFIG.btColor || "",
+          btnBackground: CONFIG.btStyle?.backgroundImage || CONFIG.btStyle?.background || "",
+          btnBorderColor: "",
+          btnRadius: CONFIG.btStyle?.borderRadius || "",
           audienceEnabled: Boolean(CONFIG.audienceConfig?.enabled),
           includeLevelIds: Array.isArray(CONFIG.audienceConfig?.includeLevelIds) ? CONFIG.audienceConfig.includeLevelIds.slice() : [],
           excludeLevelIds: Array.isArray(CONFIG.audienceConfig?.excludeLevelIds) ? CONFIG.audienceConfig.excludeLevelIds.slice() : []
@@ -558,6 +588,11 @@
             startAt,
             endAt: endAt > startAt ? endAt : startAt + 3600 * 1000,
             currentLevelId: parseOptionalId(parsed.currentLevelId),
+            btnText: String(parsed.btnText || CONFIG.btn || ""),
+            btnTextColor: String(parsed.btnTextColor || CONFIG.btColor || ""),
+            btnBackground: String(parsed.btnBackground || CONFIG.btStyle?.backgroundImage || CONFIG.btStyle?.background || ""),
+            btnBorderColor: String(parsed.btnBorderColor || ""),
+            btnRadius: String(parsed.btnRadius || CONFIG.btStyle?.borderRadius || ""),
             audienceEnabled: parsed.audienceEnabled == null ? Boolean(CONFIG.audienceConfig?.enabled) : Boolean(parsed.audienceEnabled),
             includeLevelIds: parseIdList((parsed.includeLevelIds || []).join ? parsed.includeLevelIds.join(",") : parsed.includeLevelIds),
             excludeLevelIds: parseIdList((parsed.excludeLevelIds || []).join ? parsed.excludeLevelIds.join(",") : parsed.excludeLevelIds)
@@ -577,6 +612,11 @@
         el.endInput.value = toDatetimeLocalValue(editorState.endAt);
         el.endInput.min = toDatetimeLocalValue(editorState.startAt);
         el.currentLevelInput.value = editorState.currentLevelId == null ? "" : String(editorState.currentLevelId);
+        el.btnTextInput.value = editorState.btnText || "";
+        el.btnTextColorInput.value = editorState.btnTextColor || "";
+        el.btnBgInput.value = editorState.btnBackground || "";
+        el.btnBorderColorInput.value = editorState.btnBorderColor || "";
+        el.btnRadiusInput.value = editorState.btnRadius || "";
         el.includeIdsInput.value = editorState.includeLevelIds.join(",");
         el.excludeIdsInput.value = editorState.excludeLevelIds.join(",");
         el.audienceEnabledInput.checked = Boolean(editorState.audienceEnabled);
@@ -587,6 +627,11 @@
         const nextStart = parseDatetimeLocal(el.startInput.value);
         const nextEnd = parseDatetimeLocal(el.endInput.value);
         const nextCurrentLevel = parseOptionalId(el.currentLevelInput.value);
+        const nextBtnText = String(el.btnTextInput.value || "").trim();
+        const nextBtnTextColor = String(el.btnTextColorInput.value || "").trim();
+        const nextBtnBackground = String(el.btnBgInput.value || "").trim();
+        const nextBtnBorderColor = String(el.btnBorderColorInput.value || "").trim();
+        const nextBtnRadius = String(el.btnRadiusInput.value || "").trim();
         const nextIncludeLevelIds = parseIdList(el.includeIdsInput.value);
         const nextExcludeLevelIds = parseIdList(el.excludeIdsInput.value);
         const nextAudienceEnabled = Boolean(el.audienceEnabledInput.checked);
@@ -606,6 +651,11 @@
         editorState.startAt = nextStart || now;
         editorState.endAt = nextEnd;
         editorState.currentLevelId = nextCurrentLevel;
+        editorState.btnText = nextBtnText || CONFIG.btn;
+        editorState.btnTextColor = nextBtnTextColor || CONFIG.btColor || "";
+        editorState.btnBackground = nextBtnBackground || CONFIG.btStyle?.backgroundImage || CONFIG.btStyle?.background || "";
+        editorState.btnBorderColor = nextBtnBorderColor;
+        editorState.btnRadius = nextBtnRadius || CONFIG.btStyle?.borderRadius || "";
         editorState.includeLevelIds = nextIncludeLevelIds;
         editorState.excludeLevelIds = nextExcludeLevelIds;
         editorState.audienceEnabled = nextAudienceEnabled;
@@ -746,11 +796,26 @@
 
         el.banner.style.background = gradient;
         el.bannerText.textContent = editorState.text || CONFIG.text || "";
-        el.bannerBtn.textContent = CONFIG.btn || "Learn more";
-        el.bannerBtn.style.color = CONFIG.btColor || "#111";
+        el.bannerBtn.textContent = editorState.btnText || CONFIG.btn || "了解详情";
+        el.bannerBtn.style.color = editorState.btnTextColor || CONFIG.btColor || "#111";
 
         applyStyleObject(el.bannerText, CONFIG.textStyle);
         applyStyleObject(el.bannerBtn, CONFIG.btStyle);
+        if (editorState.btnBackground) {
+          if (editorState.btnBackground.includes("gradient(")) {
+            el.bannerBtn.style.backgroundImage = editorState.btnBackground;
+            el.bannerBtn.style.backgroundColor = "";
+          } else {
+            el.bannerBtn.style.backgroundImage = "none";
+            el.bannerBtn.style.backgroundColor = editorState.btnBackground;
+          }
+        }
+        if (editorState.btnBorderColor) {
+          el.bannerBtn.style.borderColor = editorState.btnBorderColor;
+        }
+        if (editorState.btnRadius) {
+          el.bannerBtn.style.borderRadius = editorState.btnRadius;
+        }
 
         el.showCountdown.className = `countdown ${cc.countdownPosition || "top-right"}`;
         applyStyleObject(el.showCountdown, cc.countdownStyle || {});
@@ -762,17 +827,17 @@
         el.banner.style.display = isShowing && canShowByWindow && canShowByAudience ? "flex" : "none";
 
         if (cc.showCountdown && isShowing && canShowByWindow) {
-          el.showCountdown.textContent = `⌛ Expires in ${formatDuration(windowStatus.remainingMs)}`;
+          el.showCountdown.textContent = `⏳ 剩余 ${formatDuration(windowStatus.remainingMs)}`;
           el.showCountdown.style.display = "block";
         } else {
           el.showCountdown.style.display = "none";
         }
 
         if (cc.showHideCountdown && windowStatus.status === "PRE_START") {
-          el.hideCountdown.textContent = `Starts in ${formatDuration(windowStatus.remainingMs)}`;
+          el.hideCountdown.textContent = `距离开始 ${formatDuration(windowStatus.remainingMs)}`;
           el.hideCountdown.style.display = "block";
         } else if (cc.showHideCountdown && windowStatus.status === "ENDED") {
-          el.hideCountdown.textContent = "Ended";
+          el.hideCountdown.textContent = "已结束";
           el.hideCountdown.style.display = "block";
         } else {
           el.hideCountdown.style.display = "none";
@@ -841,6 +906,31 @@
             render(Date.now());
           }
         });
+        el.btnTextInput.addEventListener("change", () => {
+          if (readEditorInputs()) {
+            render(Date.now());
+          }
+        });
+        el.btnTextColorInput.addEventListener("change", () => {
+          if (readEditorInputs()) {
+            render(Date.now());
+          }
+        });
+        el.btnBgInput.addEventListener("change", () => {
+          if (readEditorInputs()) {
+            render(Date.now());
+          }
+        });
+        el.btnBorderColorInput.addEventListener("change", () => {
+          if (readEditorInputs()) {
+            render(Date.now());
+          }
+        });
+        el.btnRadiusInput.addEventListener("change", () => {
+          if (readEditorInputs()) {
+            render(Date.now());
+          }
+        });
         el.includeIdsInput.addEventListener("change", () => {
           if (readEditorInputs()) {
             render(Date.now());
@@ -871,6 +961,11 @@
           editorState.startAt = defaults.startAt;
           editorState.endAt = defaults.endAt;
           editorState.currentLevelId = defaults.currentLevelId;
+          editorState.btnText = defaults.btnText;
+          editorState.btnTextColor = defaults.btnTextColor;
+          editorState.btnBackground = defaults.btnBackground;
+          editorState.btnBorderColor = defaults.btnBorderColor;
+          editorState.btnRadius = defaults.btnRadius;
           editorState.includeLevelIds = defaults.includeLevelIds.slice();
           editorState.excludeLevelIds = defaults.excludeLevelIds.slice();
           editorState.audienceEnabled = defaults.audienceEnabled;
