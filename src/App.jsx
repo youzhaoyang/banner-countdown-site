@@ -102,8 +102,11 @@ function createDefaultEditorState(now = Date.now()) {
     btnBackground: CONFIG.btStyle?.backgroundImage || CONFIG.btStyle?.background || "",
     btnBorderColor: "",
     btnRadius: CONFIG.btStyle?.borderRadius || "",
-    displayStrategyMode: DISPLAY_STRATEGY.INTERVAL,
-    displayIntervalHour: 2,
+    memberLevelIds: [2, 3, 89, 111, 112, 113],
+    memberDisplayStrategyMode: DISPLAY_STRATEGY.ONCE,
+    memberDisplayIntervalHour: 24,
+    freeDisplayStrategyMode: DISPLAY_STRATEGY.INTERVAL,
+    freeDisplayIntervalHour: 2,
     audienceEnabled: Boolean(CONFIG.audienceConfig?.enabled),
     includeLevelIds: Array.isArray(CONFIG.audienceConfig?.includeLevelIds) ? CONFIG.audienceConfig.includeLevelIds.slice() : [],
     excludeLevelIds: Array.isArray(CONFIG.audienceConfig?.excludeLevelIds) ? CONFIG.audienceConfig.excludeLevelIds.slice() : []
@@ -165,10 +168,18 @@ function readEditorState() {
     const text = String(parsed.text || CONFIG.text || "");
     const startAt = Number(parsed.startAt) || defaults.startAt;
     const endAt = Number(parsed.endAt) || defaults.endAt;
-    const parsedStrategyMode = parsed.displayStrategyMode === DISPLAY_STRATEGY.ONCE
+    const parsedMemberMode = parsed.memberDisplayStrategyMode === DISPLAY_STRATEGY.INTERVAL
+      ? DISPLAY_STRATEGY.INTERVAL
+      : DISPLAY_STRATEGY.ONCE;
+    const parsedMemberInterval = Number(parsed.memberDisplayIntervalHour);
+    const parsedFreeMode = parsed.freeDisplayStrategyMode === DISPLAY_STRATEGY.ONCE
       ? DISPLAY_STRATEGY.ONCE
       : DISPLAY_STRATEGY.INTERVAL;
-    const parsedIntervalHour = Number(parsed.displayIntervalHour);
+    const parsedFreeInterval = Number(parsed.freeDisplayIntervalHour);
+    const legacyMode = parsed.displayStrategyMode === DISPLAY_STRATEGY.ONCE
+      ? DISPLAY_STRATEGY.ONCE
+      : DISPLAY_STRATEGY.INTERVAL;
+    const legacyInterval = Number(parsed.displayIntervalHour);
     return {
       text,
       startAt,
@@ -179,8 +190,17 @@ function readEditorState() {
       btnBackground: String(parsed.btnBackground || CONFIG.btStyle?.backgroundImage || CONFIG.btStyle?.background || ""),
       btnBorderColor: String(parsed.btnBorderColor || ""),
       btnRadius: String(parsed.btnRadius || CONFIG.btStyle?.borderRadius || ""),
-      displayStrategyMode: parsedStrategyMode,
-      displayIntervalHour: Number.isFinite(parsedIntervalHour) && parsedIntervalHour > 0 ? parsedIntervalHour : defaults.displayIntervalHour,
+      memberLevelIds: parseIdList(parsed.memberLevelIds || defaults.memberLevelIds),
+      memberDisplayStrategyMode: parsed.memberDisplayStrategyMode
+        ? parsedMemberMode
+        : (legacyMode === DISPLAY_STRATEGY.ONCE ? DISPLAY_STRATEGY.ONCE : defaults.memberDisplayStrategyMode),
+      memberDisplayIntervalHour: Number.isFinite(parsedMemberInterval) && parsedMemberInterval > 0
+        ? parsedMemberInterval
+        : (Number.isFinite(legacyInterval) && legacyInterval > 0 ? legacyInterval : defaults.memberDisplayIntervalHour),
+      freeDisplayStrategyMode: parsed.freeDisplayStrategyMode ? parsedFreeMode : legacyMode,
+      freeDisplayIntervalHour: Number.isFinite(parsedFreeInterval) && parsedFreeInterval > 0
+        ? parsedFreeInterval
+        : (Number.isFinite(legacyInterval) && legacyInterval > 0 ? legacyInterval : defaults.freeDisplayIntervalHour),
       audienceEnabled: parsed.audienceEnabled == null ? Boolean(CONFIG.audienceConfig?.enabled) : Boolean(parsed.audienceEnabled),
       includeLevelIds: parseIdList(parsed.includeLevelIds),
       excludeLevelIds: parseIdList(parsed.excludeLevelIds)
@@ -253,39 +273,51 @@ function getWindowKey(editorState) {
   return `${editorState.startAt}-${editorState.endAt}`;
 }
 
+function getUserGroup(editorState) {
+  if (editorState.currentLevelId == null) return "free";
+  return editorState.memberLevelIds.includes(editorState.currentLevelId) ? "member" : "free";
+}
+
 function getDisplayStrategyAccess(editorState, runtimeState) {
-  const mode = editorState.displayStrategyMode || DISPLAY_STRATEGY.INTERVAL;
+  const userGroup = getUserGroup(editorState);
+  const isMember = userGroup === "member";
+  const mode = isMember
+    ? (editorState.memberDisplayStrategyMode || DISPLAY_STRATEGY.ONCE)
+    : (editorState.freeDisplayStrategyMode || DISPLAY_STRATEGY.INTERVAL);
+  const intervalHour = isMember
+    ? Number(editorState.memberDisplayIntervalHour || 0)
+    : Number(editorState.freeDisplayIntervalHour || 0);
+  const groupLabel = isMember ? "会员用户" : "免费用户";
 
   if (runtimeState.phase !== PHASE.SHOW) {
-    return { allowed: true, reason: "非展示阶段" };
+    return { allowed: true, reason: `${groupLabel}：非展示阶段`, group: userGroup };
   }
 
   // This SHOW phase has already passed strategy gating.
   if (runtimeState.lastPolicyShowAt === runtimeState.phaseStartAt) {
-    return { allowed: true, reason: "本轮展示已准入" };
+    return { allowed: true, reason: `${groupLabel}：本轮展示已准入`, group: userGroup };
   }
 
   if (mode === DISPLAY_STRATEGY.ONCE) {
     const windowKey = getWindowKey(editorState);
     const shownInCurrentWindow = runtimeState.policyWindowKey === windowKey && Boolean(runtimeState.lastPolicyShowAt);
     if (shownInCurrentWindow) {
-      return { allowed: false, reason: "活动期间仅展示一次（已展示）" };
+      return { allowed: false, reason: `${groupLabel}：活动期间仅展示一次（已展示）`, group: userGroup };
     }
-    return { allowed: true, reason: "活动期间仅展示一次（首展示）" };
+    return { allowed: true, reason: `${groupLabel}：活动期间仅展示一次（首展示）`, group: userGroup };
   }
 
-  const intervalHour = Number(editorState.displayIntervalHour || 0);
   const intervalMs = intervalHour > 0 ? intervalHour * 3600 * 1000 : 0;
   if (!runtimeState.lastPolicyShowAt || intervalMs <= 0) {
-    return { allowed: true, reason: "满足间隔展示策略" };
+    return { allowed: true, reason: `${groupLabel}：满足间隔展示策略`, group: userGroup };
   }
 
   const elapsed = runtimeState.phaseStartAt - runtimeState.lastPolicyShowAt;
   if (elapsed >= intervalMs) {
-    return { allowed: true, reason: "满足间隔展示策略" };
+    return { allowed: true, reason: `${groupLabel}：满足间隔展示策略`, group: userGroup };
   }
 
-  return { allowed: false, reason: `间隔未到（剩余${formatDuration(intervalMs - elapsed)}）` };
+  return { allowed: false, reason: `${groupLabel}：间隔未到（剩余${formatDuration(intervalMs - elapsed)}）`, group: userGroup };
 }
 
 function getAudienceAccess(editorState) {
@@ -381,8 +413,11 @@ export default function App() {
       btnBackground: state.btnBackground || "",
       btnBorderColor: state.btnBorderColor || "",
       btnRadius: state.btnRadius || "",
-      displayStrategyMode: state.displayStrategyMode || DISPLAY_STRATEGY.INTERVAL,
-      displayIntervalHour: String(state.displayIntervalHour ?? 2),
+      memberLevelIdsInput: state.memberLevelIds.join(","),
+      memberDisplayStrategyMode: state.memberDisplayStrategyMode || DISPLAY_STRATEGY.ONCE,
+      memberDisplayIntervalHour: String(state.memberDisplayIntervalHour ?? 24),
+      freeDisplayStrategyMode: state.freeDisplayStrategyMode || DISPLAY_STRATEGY.INTERVAL,
+      freeDisplayIntervalHour: String(state.freeDisplayIntervalHour ?? 2),
       includeIdsInput: state.includeLevelIds.join(","),
       excludeIdsInput: state.excludeLevelIds.join(","),
       audienceEnabled: Boolean(state.audienceEnabled)
@@ -477,12 +512,20 @@ export default function App() {
       return;
     }
 
-    const nextStrategyMode = form.displayStrategyMode === DISPLAY_STRATEGY.ONCE
+    const nextMemberMode = form.memberDisplayStrategyMode === DISPLAY_STRATEGY.INTERVAL
+      ? DISPLAY_STRATEGY.INTERVAL
+      : DISPLAY_STRATEGY.ONCE;
+    const nextFreeMode = form.freeDisplayStrategyMode === DISPLAY_STRATEGY.ONCE
       ? DISPLAY_STRATEGY.ONCE
       : DISPLAY_STRATEGY.INTERVAL;
-    const nextDisplayIntervalHour = Number(form.displayIntervalHour || 0);
-    if (nextStrategyMode === DISPLAY_STRATEGY.INTERVAL && (!Number.isFinite(nextDisplayIntervalHour) || nextDisplayIntervalHour <= 0)) {
-      setTip({ text: "按间隔展示时，间隔小时必须大于 0。", type: "error" });
+    const nextMemberInterval = Number(form.memberDisplayIntervalHour || 0);
+    const nextFreeInterval = Number(form.freeDisplayIntervalHour || 0);
+    if (nextMemberMode === DISPLAY_STRATEGY.INTERVAL && (!Number.isFinite(nextMemberInterval) || nextMemberInterval <= 0)) {
+      setTip({ text: "会员按间隔展示时，间隔小时必须大于 0。", type: "error" });
+      return;
+    }
+    if (nextFreeMode === DISPLAY_STRATEGY.INTERVAL && (!Number.isFinite(nextFreeInterval) || nextFreeInterval <= 0)) {
+      setTip({ text: "免费用户按间隔展示时，间隔小时必须大于 0。", type: "error" });
       return;
     }
 
@@ -500,8 +543,11 @@ export default function App() {
         "",
       btnBorderColor: String(form.btnBorderColor || "").trim(),
       btnRadius: String(form.btnRadius || "").trim() || CONFIG.btStyle?.borderRadius || "",
-      displayStrategyMode: nextStrategyMode,
-      displayIntervalHour: nextStrategyMode === DISPLAY_STRATEGY.INTERVAL ? nextDisplayIntervalHour : editorState.displayIntervalHour,
+      memberLevelIds: parseIdList(form.memberLevelIdsInput),
+      memberDisplayStrategyMode: nextMemberMode,
+      memberDisplayIntervalHour: nextMemberMode === DISPLAY_STRATEGY.INTERVAL ? nextMemberInterval : editorState.memberDisplayIntervalHour,
+      freeDisplayStrategyMode: nextFreeMode,
+      freeDisplayIntervalHour: nextFreeMode === DISPLAY_STRATEGY.INTERVAL ? nextFreeInterval : editorState.freeDisplayIntervalHour,
       audienceEnabled: Boolean(form.audienceEnabled),
       includeLevelIds: parseIdList(form.includeIdsInput),
       excludeLevelIds: parseIdList(form.excludeIdsInput)
@@ -544,8 +590,11 @@ export default function App() {
       btnBackground: defaults.btnBackground,
       btnBorderColor: defaults.btnBorderColor,
       btnRadius: defaults.btnRadius,
-      displayStrategyMode: defaults.displayStrategyMode,
-      displayIntervalHour: String(defaults.displayIntervalHour),
+      memberLevelIdsInput: defaults.memberLevelIds.join(","),
+      memberDisplayStrategyMode: defaults.memberDisplayStrategyMode,
+      memberDisplayIntervalHour: String(defaults.memberDisplayIntervalHour),
+      freeDisplayStrategyMode: defaults.freeDisplayStrategyMode,
+      freeDisplayIntervalHour: String(defaults.freeDisplayIntervalHour),
       includeIdsInput: defaults.includeLevelIds.join(","),
       excludeIdsInput: defaults.excludeLevelIds.join(","),
       audienceEnabled: defaults.audienceEnabled
@@ -584,8 +633,10 @@ export default function App() {
             <div className="stat">当前阶段：<strong>{`${runtimeState.phase} (${windowStatus.status})`}</strong></div>
             <div className="stat">已完成循环：<strong>{runtimeState.cyclesCompleted}</strong></div>
             <div className="stat">当前用户等级ID：<strong>{editorState.currentLevelId == null ? "未设置" : editorState.currentLevelId}</strong></div>
+            <div className="stat">当前用户分组：<strong>{displayStrategyAccess.group === "member" ? "会员用户" : "免费用户"}</strong></div>
             <div className="stat">可见性结果：<strong>{`${audienceAccess.allowed ? "可见" : "不可见"}（${audienceAccess.reason}）`}</strong></div>
-            <div className="stat">展示策略：<strong>{editorState.displayStrategyMode === DISPLAY_STRATEGY.ONCE ? "活动期间仅展示一次" : `活动期每 ${editorState.displayIntervalHour} 小时展示一次`}</strong></div>
+            <div className="stat">会员策略：<strong>{editorState.memberDisplayStrategyMode === DISPLAY_STRATEGY.ONCE ? "活动期间仅展示一次" : `每 ${editorState.memberDisplayIntervalHour} 小时展示一次`}</strong></div>
+            <div className="stat">免费策略：<strong>{editorState.freeDisplayStrategyMode === DISPLAY_STRATEGY.ONCE ? "活动期间仅展示一次" : `每 ${editorState.freeDisplayIntervalHour} 小时展示一次`}</strong></div>
             <div className="stat">策略状态：<strong>{displayStrategyAccess.reason}</strong></div>
             <div className="stat">状态存储键：<code>{CONFIG.storageKey}</code></div>
             <div className="stat">活动倒计时：<strong>{formatWindowCountdown(windowStatus)}</strong></div>
@@ -609,26 +660,57 @@ export default function App() {
               <input id="currentLevelInput" type="number" min="0" step="1" placeholder="例如 2 / 3 / 89 / 111" value={form.currentLevelInput} onChange={(e) => setForm((p) => ({ ...p, currentLevelInput: e.target.value }))} />
             </div>
             <div className="editor-field">
-              <label htmlFor="displayStrategyMode">展示策略</label>
+              <label htmlFor="memberLevelIdsInput">会员等级ID列表（逗号分隔）</label>
+              <textarea
+                id="memberLevelIdsInput"
+                value={form.memberLevelIdsInput}
+                onChange={(e) => setForm((p) => ({ ...p, memberLevelIdsInput: e.target.value }))}
+              />
+            </div>
+            <div className="editor-field">
+              <label htmlFor="memberDisplayStrategyMode">会员用户展示策略</label>
               <select
-                id="displayStrategyMode"
-                value={form.displayStrategyMode}
-                onChange={(e) => setForm((p) => ({ ...p, displayStrategyMode: e.target.value }))}
+                id="memberDisplayStrategyMode"
+                value={form.memberDisplayStrategyMode}
+                onChange={(e) => setForm((p) => ({ ...p, memberDisplayStrategyMode: e.target.value }))}
               >
                 <option value={DISPLAY_STRATEGY.INTERVAL}>活动期每 N 小时展示一次</option>
                 <option value={DISPLAY_STRATEGY.ONCE}>活动期间仅展示一次</option>
               </select>
             </div>
             <div className="editor-field">
-              <label htmlFor="displayIntervalHour">展示间隔小时（N）</label>
+              <label htmlFor="memberDisplayIntervalHour">会员展示间隔小时（N）</label>
               <input
-                id="displayIntervalHour"
+                id="memberDisplayIntervalHour"
                 type="number"
                 min="0.1"
                 step="0.1"
-                disabled={form.displayStrategyMode !== DISPLAY_STRATEGY.INTERVAL}
-                value={form.displayIntervalHour}
-                onChange={(e) => setForm((p) => ({ ...p, displayIntervalHour: e.target.value }))}
+                disabled={form.memberDisplayStrategyMode !== DISPLAY_STRATEGY.INTERVAL}
+                value={form.memberDisplayIntervalHour}
+                onChange={(e) => setForm((p) => ({ ...p, memberDisplayIntervalHour: e.target.value }))}
+              />
+            </div>
+            <div className="editor-field">
+              <label htmlFor="freeDisplayStrategyMode">免费用户展示策略</label>
+              <select
+                id="freeDisplayStrategyMode"
+                value={form.freeDisplayStrategyMode}
+                onChange={(e) => setForm((p) => ({ ...p, freeDisplayStrategyMode: e.target.value }))}
+              >
+                <option value={DISPLAY_STRATEGY.INTERVAL}>活动期每 N 小时展示一次</option>
+                <option value={DISPLAY_STRATEGY.ONCE}>活动期间仅展示一次</option>
+              </select>
+            </div>
+            <div className="editor-field">
+              <label htmlFor="freeDisplayIntervalHour">免费展示间隔小时（N）</label>
+              <input
+                id="freeDisplayIntervalHour"
+                type="number"
+                min="0.1"
+                step="0.1"
+                disabled={form.freeDisplayStrategyMode !== DISPLAY_STRATEGY.INTERVAL}
+                value={form.freeDisplayIntervalHour}
+                onChange={(e) => setForm((p) => ({ ...p, freeDisplayIntervalHour: e.target.value }))}
               />
             </div>
             <div className="editor-field">
