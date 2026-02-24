@@ -1,0 +1,119 @@
+
+
+===== PAGE 1 =====
+
+视频AGENT【WIP】
+LIBTVagent构建⽬标
+（视频智能⼯作台+造次视频⽣成器）从⼿动workflow主导+agent初始化和辅助逐步演变成agent
+planning主导+workflow微调辅助。
+
+优势：相⽐lovart的图⽚弱逻辑画布，视频W orkflow(DAG 图)天然是带逻辑的，更容易被模型理解。
+阶段演进
+1.前置⼯作
+定义评测标准（⽂本理解指令遵循分镜效果视频清晰度⾳⾊动作流畅度等，1-4分），针对视频请
+求制作评测集（100-200题），评测裸模和APP,拿到摸底通过率分数。
+在我们下⾯的第⼀阶段交付后，⽤同样题⽬和标准评测第⼀阶段的Agent产出物（直出的素材和局部
+workflow结果）
+2.第⼀阶段⽬标
+• ⼯具定义完毕
+• 对于LIBTV，图和视频⽣成和基模对⻬（不做userprom pt澄清）。根据⽤⼾意图做基础planning
+⽣成局部W orkflow以及各种画布组件（即⽤⼾需要将局部W orkflow和主W orkflow进⾏⼿动连
+接），⽀持Redo和U ndo。所有⽤⼾的语⾔交互和画布交互，都作为context有统⼀的MessageID
+进⾏存储。
+• 对于造次，根据⽤⼾意图，插⼊前⾯剧集的前情提要、⼈设等。需要做数据离线处理。
+• ⼯具列表-LIBTV：
+图⽚⽣成
+视频⽣成
+⾳乐⽣成
+脚本⽣成
+物料调整（剪辑合成等）
+逻辑操作（打组连线）
+
+===== PAGE 2 =====
+
+FileSearch(取⽂本数据作为上下⽂，需要⽀持pdf等)
+M em orySearch(初期不暴露给LLM )
+SPECSearch(初期不暴露给LLM )
+• ⼯具列表-造次：
+视频⽣成
+脚本⽣成
+FileSearch(取剧集梗概)
+CharSearch(取⼈设)
+3.第⼆阶段⽬标
+提升Agent对整个画布的理解能⼒，如Agent到W orkflow的动态修改能⼒（如帮我在分镜的地⽅，多增
+加⼀个XX分镜），再如整个W orkflow的⾃动化重组和优化能⼒。同时增加⾜够强的⽤⼾需求澄清能⼒
+AskHU M AN。
+4.第三阶段⽬标
+基于前两阶段沉淀⾜够多的数据，完成数据清洗和聚类，形成最佳实践接⼊（特化模型+多层级user
+m em ory+industrySPEC）；这⼀阶段，可能会产⽣⽆workflow模式
+技术设计原则
+第⼀阶段
+基础架构
+1.基础框架使⽤EINO
+2.⼯具考虑阿⾥云的M SE进⾏M CP部署,⽬前⼯具整体使⽤M CP协议
+3.先不考虑sub-agent，考虑复杂tool(tool中可以带LLM 和⼦react)
+4.TRACE使⽤阿⾥云
+【框架搭建】
+IM&画布服务
+
+===== PAGE 3 =====
+
+1.IM 链路使⽤⻓链接和W S（原则上复⽤画布的W S）；需要实现前后端流式协议，⽂本和画布产物上
+屏redoundo；前端须建设多产物渲染容器.
+2.https://docs.ag-ui.com /concepts/architecture，来做前后端协议，可以兼容W S。关注⼀下
+copilotKit-reactSDK；服务端需要⽤G O来实现runtim e
+3.搭建M SG 存储和基本架构，包含CONVERSATION/THREADID、M SG ID、PROJ ECTID、EVENT、
+EVENTTYPE，确定哪些是给⽤⼾看哪些只是给模型看。M SG 服务需要提供给Chat使⽤。
+4.链路中，每个userm sg、每个node/group写操作（创建、⽣成内容、删除）、模型回复，需要⽣
+成单独M SG ID，并记录所有参数、时间戳。
+5.⼀个trace应该包含⼀个request-responsepair对，收到userm essage(⽂本/画布操作)，⽣成
+traceID/logID。
+6.对于response数据，会先初始化，通过状态来控制。流式中（⽣成中）的数据缓存，完成推送后再
+更新落库状态。
+7.需要建设模型运⾏时前台状态，超时机制，刷新拉取机制；
+8.需要建设前端上传图⽚、AT节点等能⼒。
+9.需要建设基于m sgtype的前台多产物渲染（IM 和画布）；可能copilotkitSDK⽀持
+【AG U I协议转换、IM 上下⾏链路】
+【前端协议SDK、U ISDK集成和DEM O（画布&IM 同时渲染）】
+【EVENT定义、M SG 存储设计、M SG CRU D能⼒】
+【EVENT到前端的handler】
+Chat服务
+1.建设模型⽹关gem inipro/kim i2.5/qwen3.5横向对⽐（nothinking），以及prom pt
+com piler(SP+tools+sessionU P+m em ory)
+2.U P需要从IM 的库和缓存中进⾏拉取，考虑30轮上下⽂。
+3.prom pt细节中，需要对⽤⼾的⼤意图进⾏显⽰拆分，分为直接⽣成需求（⼯具、⽣成器）和
+planning需求。
+4.本期agentplanning能⼒仅需要覆盖⽣成和初始化workflow。
+5.基于EINO的reAct能⼒建设agentplanning链路，包含上下⽂拼接、⼯具调⽤等；每⼀步任务需要
+进⾏状态管理，具备任务整体的回滚、快速失败、恢复能⼒(EINO应该是原⽣⽀持)。
+6.Planning在最终本质是执⾏创建节点和执⾏节点，需要考虑workflow不执⾏和执⾏两种情况。因
+此【图⽚、视频、⾳乐】⽣成⼯具中，都应该有⼀个参数needExecute，也应该有⼀个参数是
+parentNode，需要模型推理和填写参数。⼀个⼯具完成本质指的是⽂本在IM 中出现且Node上屏或
+者执⾏完成。
+
+===== PAGE 4 =====
+
+7.在U P中应该随时传递最新的workflow的全局J SON告诉模型最新画布状态；在⻓期来看，模型需要
+理解这个workflowschem a进⾏判断下⼀步，本期不强求。提前做好planning因此可以完全⼯程侧
+来完整整个⼯具链=调⽤。
+
+8.Stop指令需要独⽴建设，应该是前台直接failfast，然后在从task级别停⽌。
+【模型⽹关+prom ptcom pilier+prom pt设计】
+【Agent主链路（REACT）+返回解析EVENT+FC】EINO配置
+【任务和STEP状态管理】
+【⼯具定义4个，⼯具M CP】
+第⼀期⼯具
+1.图⽚⽣成
+2.视频⽣成
+3.⾳乐⽣成
+4.脚本⽣成
+5.物料调整（剪辑合成等）
+6.逻辑操作（打组连线）
+7.FileSearch(取⽂本数据作为上下⽂，需要⽀持pdf等)
+8.M em orySearch(初期不暴露给LLM )
+9.SPECSearch(初期不暴露给LLM )
+数据沉淀
+1.U P数据需要按照时间戳还原为⽤⼾⾏为序列，进⼊HIVE
+2.
+第⼆阶段
+第三阶段
