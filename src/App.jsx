@@ -643,109 +643,125 @@ export default function App() {
           </div>
 
           <div className="editor">
-            <div className="editor-field">
-              <label htmlFor="bannerTextInput">Banner 文案</label>
-              <input id="bannerTextInput" type="text" value={form.text} onChange={(e) => setForm((p) => ({ ...p, text: e.target.value }))} />
+            <div className="editor-grid">
+              <div className="editor-field">
+                <label htmlFor="bannerTextInput">Banner 文案</label>
+                <input id="bannerTextInput" type="text" value={form.text} onChange={(e) => setForm((p) => ({ ...p, text: e.target.value }))} />
+              </div>
+              <div className="editor-field">
+                <label htmlFor="startInput">开始时间</label>
+                <input id="startInput" type="datetime-local" value={form.startInput} onChange={(e) => setForm((p) => ({ ...p, startInput: e.target.value }))} />
+              </div>
+              <div className="editor-field">
+                <label htmlFor="endInput">结束时间</label>
+                <input id="endInput" type="datetime-local" value={form.endInput} min={form.startInput} onChange={(e) => setForm((p) => ({ ...p, endInput: e.target.value }))} />
+              </div>
+              <div className="editor-field">
+                <label htmlFor="currentLevelInput">当前用户等级ID</label>
+                <input id="currentLevelInput" type="number" min="0" step="1" placeholder="例如 2 / 3 / 89 / 111" value={form.currentLevelInput} onChange={(e) => setForm((p) => ({ ...p, currentLevelInput: e.target.value }))} />
+              </div>
+              <div className="editor-field">
+                <label htmlFor="btnTextInput">右侧按钮文案</label>
+                <input id="btnTextInput" type="text" value={form.btnText} onChange={(e) => setForm((p) => ({ ...p, btnText: e.target.value }))} />
+              </div>
+              <div className="editor-field">
+                <label htmlFor="btnTextColorInput">按钮文字颜色</label>
+                <input id="btnTextColorInput" type="text" value={form.btnTextColor} onChange={(e) => setForm((p) => ({ ...p, btnTextColor: e.target.value }))} />
+              </div>
+              <div className="editor-field">
+                <label htmlFor="btnBgInput">按钮背景</label>
+                <input id="btnBgInput" type="text" value={form.btnBackground} onChange={(e) => setForm((p) => ({ ...p, btnBackground: e.target.value }))} />
+              </div>
+              <div className="editor-field">
+                <label htmlFor="btnBorderColorInput">按钮边框颜色</label>
+                <input id="btnBorderColorInput" type="text" value={form.btnBorderColor} onChange={(e) => setForm((p) => ({ ...p, btnBorderColor: e.target.value }))} />
+              </div>
+              <div className="editor-field">
+                <label htmlFor="btnRadiusInput">按钮圆角</label>
+                <input id="btnRadiusInput" type="text" value={form.btnRadius} onChange={(e) => setForm((p) => ({ ...p, btnRadius: e.target.value }))} />
+              </div>
+              <div className="editor-field">
+                <label htmlFor="includeIdsInput">可见等级ID（逗号分隔）</label>
+                <textarea id="includeIdsInput" value={form.includeIdsInput} onChange={(e) => setForm((p) => ({ ...p, includeIdsInput: e.target.value }))} />
+              </div>
+              <div className="editor-field">
+                <label htmlFor="excludeIdsInput">不可见等级ID（逗号分隔）</label>
+                <textarea id="excludeIdsInput" value={form.excludeIdsInput} onChange={(e) => setForm((p) => ({ ...p, excludeIdsInput: e.target.value }))} />
+              </div>
+              <div className="editor-field checkbox">
+                <label htmlFor="audienceEnabledInput">
+                  <input id="audienceEnabledInput" type="checkbox" checked={form.audienceEnabled} onChange={(e) => setForm((p) => ({ ...p, audienceEnabled: e.target.checked }))} />
+                  启用会员等级定向
+                </label>
+              </div>
             </div>
-            <div className="editor-field">
-              <label htmlFor="startInput">开始时间</label>
-              <input id="startInput" type="datetime-local" value={form.startInput} onChange={(e) => setForm((p) => ({ ...p, startInput: e.target.value }))} />
-            </div>
-            <div className="editor-field">
-              <label htmlFor="endInput">结束时间</label>
-              <input id="endInput" type="datetime-local" value={form.endInput} min={form.startInput} onChange={(e) => setForm((p) => ({ ...p, endInput: e.target.value }))} />
-            </div>
-            <div className="editor-field">
-              <label htmlFor="currentLevelInput">当前用户等级ID</label>
-              <input id="currentLevelInput" type="number" min="0" step="1" placeholder="例如 2 / 3 / 89 / 111" value={form.currentLevelInput} onChange={(e) => setForm((p) => ({ ...p, currentLevelInput: e.target.value }))} />
-            </div>
-            <div className="editor-field">
-              <label htmlFor="memberLevelIdsInput">会员等级ID列表（逗号分隔）</label>
-              <textarea
-                id="memberLevelIdsInput"
-                value={form.memberLevelIdsInput}
-                onChange={(e) => setForm((p) => ({ ...p, memberLevelIdsInput: e.target.value }))}
-              />
-            </div>
-            <div className="editor-field">
-              <label htmlFor="memberDisplayStrategyMode">会员用户展示策略</label>
-              <select
-                id="memberDisplayStrategyMode"
-                value={form.memberDisplayStrategyMode}
-                onChange={(e) => setForm((p) => ({ ...p, memberDisplayStrategyMode: e.target.value }))}
-              >
-                <option value={DISPLAY_STRATEGY.INTERVAL}>活动期每 N 小时展示一次</option>
-                <option value={DISPLAY_STRATEGY.ONCE}>活动期间仅展示一次</option>
-              </select>
-            </div>
-            <div className="editor-field">
-              <label htmlFor="memberDisplayIntervalHour">会员展示间隔小时（N）</label>
-              <input
-                id="memberDisplayIntervalHour"
-                type="number"
-                min="0.1"
-                step="0.1"
-                disabled={form.memberDisplayStrategyMode !== DISPLAY_STRATEGY.INTERVAL}
-                value={form.memberDisplayIntervalHour}
-                onChange={(e) => setForm((p) => ({ ...p, memberDisplayIntervalHour: e.target.value }))}
-              />
-            </div>
-            <div className="editor-field">
-              <label htmlFor="freeDisplayStrategyMode">免费用户展示策略</label>
-              <select
-                id="freeDisplayStrategyMode"
-                value={form.freeDisplayStrategyMode}
-                onChange={(e) => setForm((p) => ({ ...p, freeDisplayStrategyMode: e.target.value }))}
-              >
-                <option value={DISPLAY_STRATEGY.INTERVAL}>活动期每 N 小时展示一次</option>
-                <option value={DISPLAY_STRATEGY.ONCE}>活动期间仅展示一次</option>
-              </select>
-            </div>
-            <div className="editor-field">
-              <label htmlFor="freeDisplayIntervalHour">免费展示间隔小时（N）</label>
-              <input
-                id="freeDisplayIntervalHour"
-                type="number"
-                min="0.1"
-                step="0.1"
-                disabled={form.freeDisplayStrategyMode !== DISPLAY_STRATEGY.INTERVAL}
-                value={form.freeDisplayIntervalHour}
-                onChange={(e) => setForm((p) => ({ ...p, freeDisplayIntervalHour: e.target.value }))}
-              />
-            </div>
-            <div className="editor-field">
-              <label htmlFor="btnTextInput">右侧按钮文案</label>
-              <input id="btnTextInput" type="text" value={form.btnText} onChange={(e) => setForm((p) => ({ ...p, btnText: e.target.value }))} />
-            </div>
-            <div className="editor-field">
-              <label htmlFor="btnTextColorInput">按钮文字颜色</label>
-              <input id="btnTextColorInput" type="text" value={form.btnTextColor} onChange={(e) => setForm((p) => ({ ...p, btnTextColor: e.target.value }))} />
-            </div>
-            <div className="editor-field">
-              <label htmlFor="btnBgInput">按钮背景</label>
-              <input id="btnBgInput" type="text" value={form.btnBackground} onChange={(e) => setForm((p) => ({ ...p, btnBackground: e.target.value }))} />
-            </div>
-            <div className="editor-field">
-              <label htmlFor="btnBorderColorInput">按钮边框颜色</label>
-              <input id="btnBorderColorInput" type="text" value={form.btnBorderColor} onChange={(e) => setForm((p) => ({ ...p, btnBorderColor: e.target.value }))} />
-            </div>
-            <div className="editor-field">
-              <label htmlFor="btnRadiusInput">按钮圆角</label>
-              <input id="btnRadiusInput" type="text" value={form.btnRadius} onChange={(e) => setForm((p) => ({ ...p, btnRadius: e.target.value }))} />
-            </div>
-            <div className="editor-field">
-              <label htmlFor="includeIdsInput">可见等级ID（逗号分隔）</label>
-              <textarea id="includeIdsInput" value={form.includeIdsInput} onChange={(e) => setForm((p) => ({ ...p, includeIdsInput: e.target.value }))} />
-            </div>
-            <div className="editor-field">
-              <label htmlFor="excludeIdsInput">不可见等级ID（逗号分隔）</label>
-              <textarea id="excludeIdsInput" value={form.excludeIdsInput} onChange={(e) => setForm((p) => ({ ...p, excludeIdsInput: e.target.value }))} />
-            </div>
-            <div className="editor-field checkbox">
-              <label htmlFor="audienceEnabledInput">
-                <input id="audienceEnabledInput" type="checkbox" checked={form.audienceEnabled} onChange={(e) => setForm((p) => ({ ...p, audienceEnabled: e.target.checked }))} />
-                启用会员等级定向
-              </label>
+
+            <div className="strategy-groups">
+              <section className="strategy-group member-group">
+                <h3 className="group-title">组一：会员用户策略</h3>
+                <div className="group-grid">
+                  <div className="editor-field">
+                    <label htmlFor="memberLevelIdsInput">会员等级ID列表（逗号分隔）</label>
+                    <textarea
+                      id="memberLevelIdsInput"
+                      value={form.memberLevelIdsInput}
+                      onChange={(e) => setForm((p) => ({ ...p, memberLevelIdsInput: e.target.value }))}
+                    />
+                  </div>
+                  <div className="editor-field">
+                    <label htmlFor="memberDisplayStrategyMode">会员用户展示策略</label>
+                    <select
+                      id="memberDisplayStrategyMode"
+                      value={form.memberDisplayStrategyMode}
+                      onChange={(e) => setForm((p) => ({ ...p, memberDisplayStrategyMode: e.target.value }))}
+                    >
+                      <option value={DISPLAY_STRATEGY.INTERVAL}>活动期每 N 小时展示一次</option>
+                      <option value={DISPLAY_STRATEGY.ONCE}>活动期间仅展示一次</option>
+                    </select>
+                  </div>
+                  <div className="editor-field">
+                    <label htmlFor="memberDisplayIntervalHour">会员展示间隔小时（N）</label>
+                    <input
+                      id="memberDisplayIntervalHour"
+                      type="number"
+                      min="0.1"
+                      step="0.1"
+                      disabled={form.memberDisplayStrategyMode !== DISPLAY_STRATEGY.INTERVAL}
+                      value={form.memberDisplayIntervalHour}
+                      onChange={(e) => setForm((p) => ({ ...p, memberDisplayIntervalHour: e.target.value }))}
+                    />
+                  </div>
+                </div>
+              </section>
+
+              <section className="strategy-group free-group">
+                <h3 className="group-title">组二：免费用户策略</h3>
+                <div className="group-grid">
+                  <div className="editor-field">
+                    <label htmlFor="freeDisplayStrategyMode">免费用户展示策略</label>
+                    <select
+                      id="freeDisplayStrategyMode"
+                      value={form.freeDisplayStrategyMode}
+                      onChange={(e) => setForm((p) => ({ ...p, freeDisplayStrategyMode: e.target.value }))}
+                    >
+                      <option value={DISPLAY_STRATEGY.INTERVAL}>活动期每 N 小时展示一次</option>
+                      <option value={DISPLAY_STRATEGY.ONCE}>活动期间仅展示一次</option>
+                    </select>
+                  </div>
+                  <div className="editor-field">
+                    <label htmlFor="freeDisplayIntervalHour">免费展示间隔小时（N）</label>
+                    <input
+                      id="freeDisplayIntervalHour"
+                      type="number"
+                      min="0.1"
+                      step="0.1"
+                      disabled={form.freeDisplayStrategyMode !== DISPLAY_STRATEGY.INTERVAL}
+                      value={form.freeDisplayIntervalHour}
+                      onChange={(e) => setForm((p) => ({ ...p, freeDisplayIntervalHour: e.target.value }))}
+                    />
+                  </div>
+                </div>
+              </section>
             </div>
           </div>
 
